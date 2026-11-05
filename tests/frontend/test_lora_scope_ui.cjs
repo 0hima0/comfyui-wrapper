@@ -1,0 +1,25 @@
+const {readProjectFile}=require('./support.cjs');
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const source=readProjectFile('web/static/model_settings.js','utf8');
+const elements={};
+function $(id){return elements[id]??={value:'',dataset:{},children:[],replaceChildren(){this.children=[];this.value='';},append(item){this.children.push(item);if(this.children.length===1)this.value=item.value;}};}
+const context=vm.createContext({$,document:{createElement(){return {};}}});
+vm.runInContext(source.slice(source.indexOf('function updateLoraScopes(')),context);
+vm.runInContext('updateLoraScopes([{id:2,filename:"a.png"},{id:7,filename:"b.png"}])',context);
+assert.deepEqual($('lora-0-scope').children.map(o=>o.value),['auto','global','image:2','image:7']);
+$('lora-0-scope').value='image:7';
+vm.runInContext('updateLoraScopes([{id:7,filename:"b.png"}])',context);
+assert.equal($('lora-0-scope').value,'image:7');
+vm.runInContext('updateLoraScopes([])',context);
+assert.equal($('lora-0-scope').value,'image:7');
+assert($('lora-0-scope').children.at(-1).textContent.includes('再選択'));
+$('lora-0-scope').dataset.pendingScope='image:2';
+vm.runInContext('updateLoraScopes([{id:2,filename:"restored.png"}])',context);
+assert.equal($('lora-0-scope').value,'image:2');assert.equal($('lora-0-scope').dataset.pendingScope,undefined);
+const start=source.indexOf('function loraValues()'),end=source.indexOf('function compatibleLoraNames()');
+vm.runInContext(source.slice(start,end),context);
+$('target').value='animagine';$('lora-0').value='sdxl/person.safetensors';
+$('lora-0-model').value='.7';$('lora-0-clip').value='.6';$('lora-0-trigger').value='person';
+const rows=JSON.parse(JSON.stringify(vm.runInContext('loraValues()',context)));
+assert.equal(rows[0].scope,'image:2');assert.equal(rows[0].trigger,'person');
+console.log('LoRA scopes passed: reference choices, stable IDs, missing target retained for validation, history restore and serialization.');

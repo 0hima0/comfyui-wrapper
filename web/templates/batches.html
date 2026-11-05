@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ComfyUI Wrapper | 連続生成レビュー一覧</title><link rel="stylesheet" href="{{ url_for('static',filename='webui.css') }}"></head>
+<body class="with-sidebar">{% include 'sidebar.html' %}<div class="app-content" id="page-content" tabindex="-1"><main class="gallery-main">
+<header><div class="eyebrow">ComfyUI Wrapper / GENERATION SETS</div><h1>連続生成レビュー一覧</h1><p>1回の連続生成を1つの「生成セット」として表示します。セットを開き、残す画像と設定を選別してください。ページ移動後も連続生成は継続します。</p><div class="downloads"><a class="download secondary" href="{{ url_for('batch_list_page') }}">一覧を更新</a></div></header>
+{% if batches %}<div class="batch-list batch-catalog">{% for batch in batches %}
+<article class="batch-folder" data-batch-id="{{ batch.batch_id }}" data-state="{{ batch.state }}" data-completed="{{ batch.completed }}">
+<div class="batch-folder-heading"><svg class="batch-folder-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6Z" fill="currentColor"/><path d="M3 9h18" stroke="#9b751d" stroke-width="1.5"/></svg><div><span class="batch-folder-type">生成セット</span><h2 data-batch-name>{{ batch.name or batch.display_time }}</h2></div></div>
+<p class="batch-state">{{ batch.display_state }} ／ {{ batch.completed }} / {{ batch.count }}回完了</p>
+<a class="batch-preview{% if not batch.preview_urls %} batch-preview-empty{% endif %}" href="{{ url_for('batch_page',batch_id=batch.batch_id) }}" aria-label="{{ batch.display_time }}の生成セットを開く">{% if batch.preview_urls %}{% for index in range(3) %}{% if index < batch.preview_urls|length %}<img src="{{ batch.preview_urls[index] }}" alt="セット内の生成画像 {{ index+1 }}" loading="lazy" decoding="async">{% else %}<span class="batch-preview-placeholder" aria-hidden="true">画像</span>{% endif %}{% endfor %}{% else %}<span>完成した画像はまだありません</span>{% endif %}</a>
+<form class="batch-name-form"><label>セット名（任意・80文字まで）<input name="name" maxlength="80" value="{{ batch.name or '' }}" placeholder="例：人物LoRAの強度比較"></label><button type="submit" class="secondary">名前を保存</button><span class="hint" data-name-status role="status"></span></form><p class="hint">{{ batch.display_time }}</p>
+<p class="batch-model">{{ batch.checkpoint }}</p>
+<ul class="batch-range-summary">{% for value in batch.range_labels %}<li>{{ value.label }}：{{ value.start }} → {{ value.end }}</li>{% else %}<li>変更範囲は未記録です。</li>{% endfor %}</ul>
+<p class="hint" data-batch-message role="status">{{ batch.message }}</p>
+<a class="download" href="{{ url_for('batch_page',batch_id=batch.batch_id) }}" aria-label="{{ batch.display_time }}の生成セットを開いて選別">セットを開いて選別</a>
+</article>{% endfor %}</div>{% else %}<p class="status">未確定の連続生成レビューはありません。生成画面で連続生成を実行すると、ここに生成セットが表示されます。</p>{% endif %}
+</main></div><script src="{{ url_for('static', filename='ui_common.js') }}" defer></script><script src="{{ url_for('static', filename='batch_list.js') }}" defer></script></body></html>

@@ -1,0 +1,42 @@
+{% from "batch_progress.html" import batch_progress %}
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ComfyUI Wrapper | {{ '連続生成レビュー' if temporary_batch else '生成画像ギャラリー' }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='webui.css') }}"></head>
+<body class="with-sidebar{% if temporary_batch %} batch-review-page{% endif %}">{% include 'sidebar.html' %}<div class="app-content" id="page-content" tabindex="-1"><main class="gallery-main" id="gallery-main" data-batch-id="{{ temporary_batch or '' }}">
+<header><div class="eyebrow">ComfyUI Wrapper / {{ 'GENERATION SET' if temporary_batch else 'GALLERY' }}</div><h1>{{ '連続生成レビュー' if temporary_batch else '生成画像ギャラリー' }}</h1>
+<p>{{ 'この生成セットに含まれる画像を比較し、残す画像と設定を選んでください。' if temporary_batch else '保存済みの画像を新しい順に表示します。「この設定を使う」で生成画面に設定を反映できます。' }}</p>
+<div class="downloads"><button class="secondary" id="refresh-gallery" type="button">一覧を更新</button></div></header>
+
+{% if temporary_batch %}
+{{ batch_progress('batch-progress','batch-stop',floating=true,review_link=false) }}
+<section class="batch-review card"><h2 id="batch-set-title">この生成セットを選別する</h2><p class="hint">通常ギャラリーにはまだ表示されません。「残す」にチェックした画像・設定だけを通常ギャラリーへ保存します。未選択の画像・設定と、この生成セットは確定時に削除します。</p><p id="batch-selection-count" aria-live="polite">残す画像：0枚</p><div class="downloads"><button type="button" id="batch-finalize" disabled>選別を確定</button><a href="/batches" class="download secondary">生成セット一覧へ</a><a href="/gallery" class="download secondary">通常ギャラリーへ</a></div></section>{% else %}<section id="pending-batches" aria-label="未確定の連続生成レビュー" hidden></section>{% endif %}
+<p class="hint">設定の反映だけでは生成を開始しません。参考画像は生成画面で選び直してください。実行履歴に記録され、このWebUIに保存されている画像が対象です。</p>
+<label class="gallery-favorites-filter" {% if temporary_batch %}hidden{% endif %}><input type="checkbox" id="favorites-only"> ★ お気に入りのみ表示</label>
+{% if not temporary_batch %}<p class="hint">各画像の右上にある星マークで登録・解除できます。お気に入りはこのWebUIに保存され、再起動後も保持されます。</p>
+<p class="hint">{% if gallery_retention_days %}完了から{{ gallery_retention_days }}日経った生成画像と設定は、起動時・以後1時間ごとの確認で自動削除します。{% else %}生成画像と設定の自動削除は無効です。{% endif %}削除は実行単位です。お気に入りが1枚でもある実行は、手動・自動とも削除しません。</p>
+{% endif %}
+{% if not temporary_batch %}<form id="gallery-search" class="card gallery-search" role="search"><label>キーワード（指示・Prompt・メモ）<input type="search" name="q" maxlength="300"></label><label>生成モデル<input type="search" name="model" maxlength="300" placeholder="モデル名の一部"></label><label>LoRA<input type="search" name="lora" maxlength="300" placeholder="LoRA名の一部"></label><label>分類ラベル<input type="search" name="label" maxlength="40" placeholder="ラベルと完全一致"></label><label>生成期間・開始（日本時間）<input type="date" name="after"></label><label>終了（日本時間）<input type="date" name="before"></label><div class="downloads"><button type="submit">検索</button><button type="button" id="clear-gallery-search" class="secondary">条件をクリア</button></div></form>{% endif %}
+<dialog id="annotation-dialog" aria-labelledby="annotation-title"><h2 id="annotation-title">画像のメモ・分類ラベル</h2><p id="annotation-name" class="hint"></p><label class="field">メモ（4000文字まで）<textarea id="annotation-note" maxlength="4000" rows="5"></textarea></label><label class="field">分類ラベル（カンマ区切り・各40文字・20個まで）<input id="annotation-labels" type="text" maxlength="1000" placeholder="服装が良い, 背景用"></label><p class="hint">お気に入りとは別の分類です。メモやラベルを付けても自動削除の対象からは外れません。</p><p id="annotation-status" role="status"></p><div class="downloads"><button id="annotation-save" type="button">保存</button><button id="annotation-close" type="button" class="secondary">閉じる</button></div></dialog>
+<p class="status" id="gallery-status" role="status" aria-live="polite">画像を読み込んでいます…</p>
+<div class="gallery-selection-toolbar"><section class="compare-bar" aria-label="画像の比較">
+<div><strong id="compare-count" aria-live="polite">比較する画像：0 / 5枚</strong><p class="hint" id="compare-selection-status" role="status">各画像の「比較に追加」で2〜5枚を選択してください。</p></div>
+<div class="downloads"><button type="button" id="open-comparison" disabled>設定を比較</button><button type="button" id="clear-comparison" class="secondary" disabled>選択を解除</button></div>
+<div id="compare-selected" class="compare-selected"></div>
+</section>
+{% if not temporary_batch %}<section class="bulk-delete-bar" aria-label="画像の一括削除"><strong id="bulk-delete-count" aria-live="polite">削除対象：0実行 ／ 画像0枚</strong><p class="hint">削除は実行単位です。同じ実行の画像・設定をまとめて削除します。お気に入りを含む実行は選択できません（最大500実行）。</p><div class="downloads"><button type="button" id="bulk-select-visible" class="secondary">表示中を選択</button><button type="button" id="bulk-clear-selection" class="secondary" disabled>削除選択を解除</button><button type="button" id="open-bulk-delete" class="danger" disabled>選択した画像・設定を削除</button></div></section>{% endif %}
+</div><div class="gallery-grid" id="gallery-grid" aria-label="過去の生成画像"></div>
+<div class="gallery-more"><button type="button" id="load-more" class="secondary" hidden>さらに表示</button></div>
+<dialog id="gallery-viewer" aria-label="生成画像の拡大表示"><div class="viewer-toolbar"><span id="gallery-viewer-name"></span><button type="button" id="close-gallery-viewer" class="secondary">閉じる</button></div><img id="gallery-viewer-image" alt="過去の生成画像の拡大表示"><p class="hint">Escキー、または画像の外側をクリックして閉じられます。</p></dialog>
+<dialog id="comparison-viewer" aria-labelledby="comparison-title">
+<div class="comparison-toolbar"><h2 id="comparison-title">生成時の設定を比較</h2><div class="downloads"><button type="button" class="secondary" id="reload-comparison">比較を更新</button><button type="button" class="secondary" id="close-comparison">閉じる</button></div></div>
+<div id="comparison-downloads" class="downloads"></div><label class="compare-filter" id="comparison-filter"><input type="checkbox" id="comparison-differences"> 違いがある項目だけ表示</label>
+<p class="hint" id="comparison-status" role="status" aria-live="polite"></p>
+<div class="comparison-scroll" tabindex="0" role="region" aria-label="生成設定の比較表"><table class="comparison-table" id="comparison-table"></table></div>
+</dialog>
+<dialog id="delete-gallery-dialog" aria-labelledby="delete-gallery-title"><h2 id="delete-gallery-title">画像と設定を削除しますか？</h2><p id="delete-gallery-description"></p><p>お気に入りを含む実行は削除できません。ComfyUI側のoutputフォルダーは削除対象外です。</p><p id="delete-gallery-error" class="error" role="alert"></p><div class="downloads"><button type="button" id="cancel-gallery-delete" class="secondary">キャンセル</button><button type="button" id="confirm-gallery-delete" class="danger">削除する</button></div></dialog>
+{% if not temporary_batch %}<dialog id="bulk-delete-dialog" aria-labelledby="bulk-delete-title"><h2 id="bulk-delete-title">選択した画像と設定を一括削除しますか？</h2><p id="bulk-delete-description"></p><ul id="bulk-delete-names"></ul><p class="hint">お気に入りを含む実行はサーバー側でも保護します。ComfyUI側のoutputフォルダーとダウンロード済みファイルは対象外です。</p><p id="bulk-delete-error" class="error" role="alert"></p><div class="downloads"><button type="button" id="cancel-bulk-delete" class="secondary">キャンセル</button><button type="button" id="confirm-bulk-delete" class="danger">一括削除する</button></div></dialog>{% endif %}
+{% if temporary_batch %}<dialog id="batch-confirm-dialog" aria-labelledby="batch-confirm-title"><h2 id="batch-confirm-title">選別を確定しますか？</h2><p id="batch-confirm-count"></p><p>未選択の画像・設定と、この連続生成レビューを削除します。削除は元に戻せません。</p><p class="hint">ComfyUI側のoutputフォルダーとダウンロード済みのファイルは対象外です。</p><div class="downloads"><button type="button" id="batch-confirm-cancel" class="secondary">キャンセル</button><button type="button" id="batch-confirm-save">確定して通常ギャラリーへ</button></div></dialog>{% endif %}
+</main></div><script src="{{ url_for('static', filename='ui_common.js') }}" defer></script><script src="{{ url_for('static', filename='gallery_tools.js') }}" defer></script><script src="{{ url_for('static', filename='gallery_compare.js') }}" defer></script><script src="{{ url_for('static', filename='gallery_bulk_delete.js') }}" defer></script><script src="{{ url_for('static', filename='gallery.js') }}" defer></script><script src="{{ url_for('static', filename='batch_progress.js') }}" defer></script>
+<script src="{{ url_for('static', filename='batch_review.js') }}" defer></script></body></html>

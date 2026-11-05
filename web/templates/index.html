@@ -1,0 +1,118 @@
+{% from "batch_progress.html" import batch_progress %}
+{% macro help_tip(help_id,title,description) -%}
+<span class="help-anchor"><button type="button" class="help-trigger" data-tooltip="{{ help_id }}" aria-label="{{ title }}の説明" aria-describedby="{{ help_id }}" aria-expanded="false">ⓘ</button><span id="{{ help_id }}" class="setting-tooltip" role="tooltip" hidden>{{ description }}</span></span>
+{%- endmacro %}
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ComfyUI Wrapper | {{ "LoRA管理" if manager_open else "画像解析・画像生成" }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='webui.css') }}">
+</head>
+<body class="with-sidebar{% if not manager_open %} generation-page{% endif %}">{% include 'sidebar.html' %}<div class="app-content" id="page-content" tabindex="-1"><main>
+<header><div class="eyebrow">ComfyUI Wrapper</div><h1 id="page-title">{{ 'LoRA管理' if manager_open else '画像生成' }}</h1><p id="page-description">{{ 'LoRAのトリガーワード・配布元・サンプル画像を管理します。' if manager_open else '指示や参考画像からプロンプトを組み立て、ComfyUIで画像を生成します。' }}</p></header>
+{% include 'lora_manager.html' %}
+<div id="workspace">
+<section class="card presets-panel" aria-labelledby="presets-title"><h2 id="presets-title">設定プリセット</h2><div class="preset-controls"><label class="field">保存済みの設定<select id="settings-preset"><option value="">選択してください</option></select></label><button type="button" class="secondary" id="apply-preset">読み込む</button><label class="field">プリセット名<input type="text" id="preset-name" maxlength="80" placeholder="例：二人・SDXL・横長"></label><button type="button" class="secondary" id="create-preset">新規保存</button><details class="preset-management"><summary>管理</summary><div class="preset-management-actions"><button type="button" class="secondary" id="update-preset">選択した設定を更新</button><button type="button" class="secondary" id="delete-preset">削除</button><button type="button" class="secondary" id="refresh-presets">一覧を更新</button></div></details></div><p class="hint">モデル・Prompt・LoRA・生成設定を最大50件保存できます。参考画像・生成画像・連続生成の範囲は保存しません。読み込みだけでは生成を開始しません。</p><p class="hint" id="preset-status" role="status" aria-live="polite"></p></section>
+<div class="layout">
+<form id="form" class="input-layout"><section class="card batch-options" id="batch-settings-panel" hidden><h2>連続生成の設定</h2><p class="hint">変更する数値を選び、開始値から終了値まで均等に変えて順番に生成します。シードは全回共通です。結果は専用の連続生成レビューで選別します。</p><div id="batch-fields" hidden><label class="field">変更方式<select id="batch-layout" name="batch_layout"><option value="linear">同時に変化（従来方式）</option><option value="matrix">条件マトリクス（全組み合わせ・最大2軸）</option></select></label><p id="batch-plan-summary" class="hint" role="status"></p><label class="field">生成回数（1〜20）<input type="number" id="batch-count" name="batch_count" min="1" max="20" value="5" step="1"></label><div class="batch-range-scroll"><table class="batch-ranges"><thead><tr><th>変更する項目</th><th>開始値</th><th>終了値</th><th>点数（マトリクス）</th></tr></thead><tbody id="batch-ranges"></tbody></table></div><p class="hint">チェックした項目だけ変更します。従来方式は複数項目を同時に変化させます。条件マトリクスは最大2項目の全組み合わせを生成します（合計20枚まで）。WDしきい値を変更する場合は画像解析も各値で実行します。</p></div></section>
+<input type="hidden" name="restored_generation" id="restored-generation" value="{}">
+<section class="card image-panel"><h2>画像・要望</h2>
+<p class="hint" id="restored-note" aria-live="polite"></p>
+<div class="field"><div class="field-heading"><label for="preserve-people"><input type="checkbox" name="preserve_people" id="preserve-people" aria-describedby="help-preserve-people person-preservation-state" checked> 人物・服装を維持して組み合わせる（2〜4枚）</label>{{ help_tip("help-preserve-people","人物・服装を維持して組み合わせる（2〜4枚）","各画像に1人の人物を用意してください。追加順に左から右へ配置し、服装は自動抽出します。SD1.5／SDXL／Illustrious対応。追加モデルの導入が必要です。このモードでは参考画像のコピーを成果物とComfyUIに保存します。背景や服だけの参照を混ぜる場合はオフにしてください。") }}</div></div><p class="hint" id="person-preservation-state" role="status" aria-live="polite">参考画像を2枚以上追加すると利用できます。</p>
+<div class="reference-grid"><div><div class="upload" id="drop"><div class="manager-heading"><strong>参考画像（任意）</strong><span class="hint" id="reference-count">0枚</span></div><label class="field">画像を追加（複数選択・ドロップ対応）<input aria-label="参考画像を追加" id="image" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="help-reference-images" multiple data-max-images="{{ max_reference_images }}"></label><p class="field-help" id="help-reference-images">PNG・JPEG・WebPを追加できます。人物維持モードでは1枚につき1人、通常モードでは人物・服装・背景などの参照に使います。</p><div id="reference-list"></div><p class="hint" id="reference-status" role="status" aria-live="polite">画像なしでも、指示・追加Positive Promptから生成できます。</p></div>
+</div><div class="request-content">
+<div class="field"><div class="field-heading"><label for="field-instruction">生成したい内容・変更したい内容・組み合わせの指示</label>{{ help_tip("help-instruction","生成したい内容・変更したい内容・組み合わせの指示","日本語で場面・動作・構図・変更点を指定します。参考画像がある場合は「画像1」「画像2」で対象を区別してください。画像なしの場合は、例：「夕暮れの公園でベンチに座る人物」のように入力します。") }}</div><div class="instruction-library" aria-label="指示の保存と読み込み"><label class="field" for="saved-instruction">保存した指示<select id="saved-instruction"><option value="">選択してください</option></select></label><div class="downloads"><button type="button" class="secondary" id="load-instruction">指示を読み込む</button><button type="button" class="secondary" id="refresh-instructions">一覧を更新</button></div></div><textarea id="field-instruction" name="instruction" rows="6" maxlength="8000" placeholder="例：画像1と画像2の人物が庭で並んで立っている場面。夕方の柔らかい光にしてください。（人物維持モードでは服装の指定は不要です）" aria-describedby="help-instruction"></textarea><div class="instruction-library"><label class="field" for="instruction-name">保存する名前（80文字まで）<input type="text" id="instruction-name" maxlength="80" placeholder="例：公園のベンチで二人"></label><div class="downloads"><button type="button" class="secondary" id="save-instruction">指示を新規保存</button><details><summary>保存した指示の管理</summary><div class="downloads"><button type="button" class="secondary" id="update-instruction">選択した指示を更新</button><button type="button" class="secondary" id="delete-instruction">選択した指示を削除</button></div></details></div><p id="instruction-save-status" class="hint" role="status" aria-live="polite">指示文だけを保存します。モデル・LoRA・追加Promptは変更しません。</p></div></div>
+<div id="additional-prompts">
+<div class="field"><div class="field-heading"><label for="field-additional_positive">追加Positive Prompt（任意）</label>{{ help_tip("help-additional_positive","追加Positive Prompt（任意）","生成に加えたい要素をタグや短い文で指定します。画面全体に適用するため、人物1人だけの特徴は変更指示で対象を明記してください。") }}</div><textarea id="field-additional_positive" name="additional_positive" maxlength="8000" placeholder="例：cinematic lighting, detailed background" aria-describedby="help-additional_positive"></textarea></div>
+<div class="field"><div class="field-heading"><label for="field-additional_negative">追加Negative Prompt（任意）</label>{{ help_tip("help-additional_negative","追加Negative Prompt（任意）","描いてほしくない要素を指定します。例：text, watermark。空欄なら解析結果のNegativeを使います。") }}</div><textarea id="field-additional_negative" name="additional_negative" maxlength="8000" placeholder="例：text, watermark, logo" aria-describedby="help-additional_negative"></textarea></div>
+<p class="hint" id="wd-conflict-hint" hidden>WDタグと競合する場合は入力Promptを優先します。</p>
+</div>
+</div>
+</div>
+<div class="tag-settings"><h3>WD Tagger・タグ設定</h3><div class="field"><div class="field-heading"><label for="use-wd"><input id="use-wd" aria-describedby="help-wd" name="use_wd" type="checkbox" {% if not wd_available %}disabled{% endif %}> WD Taggerを併用する（任意）</label>{{ help_tip("help-wd","WD Taggerを併用する（任意）","オフ：Qwen3-VLのみで解析。オン：WDのタグ抽出結果も補助情報として利用します。画像の特徴をタグで拾いやすくなりますが、処理が追加されます。競合を検出したタグは入力Promptを優先します。") }}</div></div>
+
+{% if not wd_available %}<p class="hint">自動タグ抽出を有効にするには、config.jsonのwd_dirにWDモデルのフォルダーを設定して再起動してください。</p>{% endif %}
+<p class="hint" id="generation-context-hint" role="status"></p><div id="wd-settings"><div class="field"><div class="field-heading"><label for="field-threshold">タグのしきい値</label>{{ help_tip("help-threshold","タグのしきい値","WDタグを採用するスコアの下限です。低くするとタグが増え、高くすると絞られます。通常は0.35から調整します。人物や服装の維持強度には影響しません。") }}</div><input id="field-threshold" name="threshold" type="number" min="0" max="1" step="0.01" value="0.35" required disabled aria-describedby="help-threshold"></div></div>
+<div class="field"><div class="field-heading"><label for="field-rating">レーティングタグ</label>{{ help_tip("help-rating","レーティングタグ","safe＝全年齢向け、sensitive＝ややセンシティブ、nsfw＝成人向け、explicit＝露骨な成人向け表現を指定するタグです。内容を検査・遮断する機能ではありません。自動判定にはWD Taggerをオンにしてください。") }}</div><select id="field-rating" name="rating" aria-describedby="help-rating"><option value="none">指定しない（プロンプトを維持）</option><option value="auto">WD Taggerの判定を使用（先頭の画像）</option><option value="safe">safe</option><option value="sensitive">sensitive</option><option value="nsfw">nsfw</option><option value="explicit">explicit</option></select></div>
+<p class="hint">指定時は元画像のレーティングを外し、選んだ1タグを適用します。</p>
+</div>
+
+<p class="hint"><a href="/preflight">実行前チェックを開く</a> — 現在の設定は画面移動時に保存されます。</p>
+<div class="runbar floating-runbar"><span id="run-loading-status" class="hint" role="status" hidden></span><label class="execution-mode"><input type="checkbox" id="batch-mode" name="batch_mode"> 連続生成</label><input type="checkbox" name="execute" id="execute" checked hidden><label class="execution-mode"><input type="checkbox" id="prompt-only"> Prompt・ワークフローのみ作成</label>
+<button id="expand-run-modes" type="button" class="secondary" aria-expanded="false" hidden>生成モード</button><button id="submit" type="button">解析して生成</button><button id="cancel-job" type="button" hidden>停止</button><a href="#generation-results" class="download secondary result-jump">結果へ移動</a>{{ batch_progress('batch-progress-summary','batch-cancel') }}<section id="job-progress" class="job-progress" aria-label="生成の進行状況" hidden>
+<div class="progress-heading"><span><span id="progress-spinner" class="progress-spinner" aria-hidden="true"></span><strong id="progress-state" tabindex="-1" role="status" aria-live="polite">実行中</strong></span><span id="progress-elapsed" class="hint"></span></div>
+<ol id="progress-stages" class="progress-stages" aria-label="処理段階"></ol>
+<p id="progress-label" class="hint" aria-live="polite"></p>
+<progress id="progress-bar" max="1" aria-label="処理の進行状況"></progress>
+</section></div>
+<p class="field-help" id="help-execute">右上のボタンで実行します。Enterキーでは開始しません。</p>
+<p id="generation-availability" class="hint" role="status" aria-live="polite"></p><a id="active-batch-link" class="download secondary" hidden>連続生成レビューを開く</a>
+
+</section>
+<section class="card generation-panel"><h2>生成設定</h2><label class="field" for="generation-model">生成モデル（ComfyUIから取得）</label>
+<p class="hint" id="model-family" role="status" aria-live="polite">モデルの種類：取得中</p>
+<select id="generation-model" required aria-describedby="help-generation-model"><option value="">一覧を取得しています…</option></select>
+<p class="field-help" id="help-generation-model">絵柄や得意な表現の基になるモデルです。ComfyUIに登録したモデルから選びます。変更すると生成設定が初期値に戻り、モデルに対応付けたフォルダーのLoRAを選べます。未登録のモデルは系列判定を使います。</p>
+<section class="recommendation-panel" aria-label="モデルの推奨設定"><strong>このモデルの推奨設定</strong><p id="model-recommendation-status" class="hint" role="status">モデル選択後に確認できます。</p><div class="downloads"><button type="button" id="save-model-recommendation" class="secondary">現在の設定を推奨値として登録</button><button type="button" id="apply-model-recommendation" class="secondary" disabled>推奨値を適用</button><button type="button" id="delete-model-recommendation" class="secondary" disabled>推奨値を解除</button></div><p class="hint">Steps・CFG・サンプラー・スケジューラー・CLIP skip・追加Negativeを保存します。適用ボタンで反映します。</p></section>
+<input name="target" id="target" type="hidden" value="anima"><input name="checkpoint" id="checkpoint" type="hidden" value="">
+<button type="button" class="secondary" id="refresh-models" style="margin-top:8px">一覧を更新</button><p class="hint" id="model-hint" aria-live="polite"></p>
+<div class="field"><div class="field-heading"><label for="profile">設定プロファイル</label>{{ help_tip("help-profile","設定プロファイル","モデルに合わせたSteps・CFG・サンプラーなどの初期値を設定します。変更すると生成設定が初期値に戻るため、細かな調整は選択後に行ってください。") }}</div><select name="profile" id="profile" aria-describedby="help-profile"><option value="auto">ファイル名から自動選択</option><option value="anima">Anima</option><option value="animagine31">Animagine XL 3.1</option><option value="animagine4">Animagine XL 4.0 / Opt</option><option value="wai17">WAI Illustrious v17（確認用初期値）</option><option value="sdxl">汎用SDXL</option><option value="sd15">SD1.5</option></select></div>
+<div class="row"><div class="field"><div class="field-heading"><label for="field-steps">Steps</label>{{ help_tip("help-steps","Steps","ノイズを取り除く計算の回数です。増やすほど処理時間が延び、画質の改善はモデルや設定によって頭打ちになります。") }}</div><input id="field-steps" name="steps" type="number" min="1" max="10000" value="30" required aria-describedby="help-steps"></div><div class="field"><div class="field-heading"><label for="field-cfg">CFG</label>{{ help_tip("help-cfg","CFG","Promptを反映する強さです。高すぎると色や形が崩れることがあります。まずプロファイルの初期値で試してください。") }}</div><input id="field-cfg" name="cfg" type="number" min="0" max="100" step="0.1" value="4" required aria-describedby="help-cfg"></div></div>
+<div class="row"><div class="field"><div class="field-heading"><label for="sampler">サンプラー</label>{{ help_tip("help-sampler_name","サンプラー","画像を描き出す計算方法です。同じPromptでも質感や細部が変わります。迷った場合はプロファイルの初期値を使ってください。") }}</div><select name="sampler_name" id="sampler" aria-describedby="help-sampler_name"><option>er_sde</option><option>euler_ancestral</option></select></div><div class="field"><div class="field-heading"><label for="scheduler">スケジューラー</label>{{ help_tip("help-scheduler","スケジューラー","各Stepで使うノイズ量の変化を決めます。サンプラーと組み合わせて使い、まずはプロファイルの初期値を推奨します。") }}</div><select name="scheduler" id="scheduler" aria-describedby="help-scheduler"><option>simple</option><option>normal</option></select></div></div>
+<div class="row"><div class="field"><div class="field-heading"><label for="field-denoise">Denoise</label>{{ help_tip("help-denoise","Denoise","ノイズ除去を行う範囲です。この画面は新規生成なので通常は1を使います。下げても参考画像の維持率を指定する値にはなりません。") }}</div><input id="field-denoise" name="denoise" type="number" min="0" max="1" step="0.01" value="1" required aria-describedby="help-denoise"></div><div class="field"><div class="field-heading"><label for="clip-skip">CLIP skip（0は既定）</label>{{ help_tip("help-clip_skip","CLIP skip（0は既定）","Promptを解釈するCLIPの層を指定します。0はモデルの既定、1・2は末尾側の層を指定します。配布元の指定がある場合に変更してください。Animaでは使いません。") }}</div><input name="clip_skip" id="clip-skip" type="number" min="0" max="24" value="0" required aria-describedby="help-clip_skip"></div></div>
+<div class="field"><div class="field-heading"><label for="quality-tags"><input type="checkbox" name="use_quality_tags" id="quality-tags" aria-describedby="help-use_quality_tags"> Animagine 4.0用の品質タグを末尾に追加</label>{{ help_tip("help-use_quality_tags","Animagine 4.0用の品質タグを末尾に追加","Animagine 4.0向けの品質タグをPositiveの末尾へ追加します。他のモデルでは通常オフにしてください。") }}</div></div>
+<p class="hint">WAIの初期値はCFG5・28 Stepsの確認用です。ファイル名の自動判定が違う場合はプロファイルを選び直してください。</p>
+<div class="row"><div class="field"><div class="field-heading"><label for="field-width">幅</label>{{ help_tip("help-width","幅","出力画像の横幅（px）です。64px単位で指定します。大きいほどVRAMと処理時間が必要になります。") }}</div><input id="field-width" name="width" type="number" min="256" max="2048" step="64" value="1024" required aria-describedby="help-width"></div><div class="field"><div class="field-heading"><label for="field-height">高さ</label>{{ help_tip("help-height","高さ","出力画像の縦幅（px）です。幅との比率で横長・縦長が決まります。モデルに合う解像度を使ってください。") }}</div><input id="field-height" name="height" type="number" min="256" max="2048" step="64" value="1024" required aria-describedby="help-height"></div></div>
+<div class="field"><div class="field-heading"><label for="field-seed">シード（空欄でランダム）</label>{{ help_tip("help-seed","シード（空欄でランダム）","乱数の開始値です。同じ設定を比較するときは同じ値を指定します。空欄は毎回ランダムで、値は履歴に保存されます。") }}</div><input id="field-seed" name="seed" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="自動で設定" aria-describedby="help-seed"></div></section>
+<section class="card lora-panel"><div id="lora-section"><h2>LoRA</h2><button type="button" class="secondary" id="open-lora-manager">トリガーワード管理</button><p class="hint">選択時にトリガーワードを自動入力します。 {{ help_tip("help-lora-scope","LoRAの適用先","人物維持モードでは、人物用LoRAの順番と画像の追加順を対応させます。人物用は画像ごとに適用し、画風用は「全体」を選んでください。") }}</p><p id="person-lora-hint" class="hint" hidden>人物用LoRAは画像ごとに、画風用LoRAは「全体」に適用してください。</p><button type="button" class="secondary" id="refresh-loras">LoRA・サンプラー一覧を更新</button><p class="hint" id="lora-hint"></p><div id="lora-rows"></div></div>
+<input type="hidden" name="loras" id="loras" value="[]">
+<p class="hint" id="lora-unavailable" hidden>AnimaではこのLoRA設定を使用できません。</p></section>
+</form>
+<div class="output-column"><section class="card output" id="generation-results" tabindex="-1"><h2>生成結果</h2><div id="status" class="status" role="status" aria-live="polite" hidden></div>
+
+<div id="empty" class="empty">生成すると、画像とPromptがここに表示されます。</div>
+<p class="hint" id="person-prompt-note" hidden>Positiveは全体の場面用です。人物の外見・服装と人物用LoRAのトリガーは、ワークフロー内の人物別Promptへ反映しています。</p><div id="generated-images"></div><div class="downloads" id="downloads"></div><div id="result" hidden><p id="summary"></p>
+<div class="copyrow"><label for="positive">Positive prompt</label><button type="button" class="secondary" data-copy="positive">コピー</button></div><textarea id="positive" maxlength="64000"></textarea>
+<div class="copyrow"><label for="negative">Negative prompt</label><button type="button" class="secondary" data-copy="negative">コピー</button></div><textarea id="negative" maxlength="64000"></textarea>
+<div class="reuse-actions"><p class="hint">最終Promptを編集して、画像解析を省略した再生成ができます。</p><button type="button" id="reuse-analysis">編集したPromptで再生成</button><p class="hint">上のPositive／Negativeを編集して再生成できます。シード・Steps・解像度・LoRA強度も変更できます。参考画像・指示・追加Prompt・タグ設定・LoRA構成を変更した場合は「解析して生成」を使ってください。連続生成との併用はできません。解析元が削除された場合は再解析が必要です。</p></div><p class="hint" id="uncertainties"></p>
+<p class="hint" id="conflicts"></p>
+<p class="hint">生成画像・プロンプト・ワークフローをこの画面から保存できます。</p></div>
+</section>
+</div></div></div>
+<details id="interrupted-history"><summary>中断した生成の確認・復旧</summary><button type="button" class="secondary" id="refresh-interrupted-history">中断した実行を確認</button><p id="interrupted-history-status" role="status"></p><div id="interrupted-history-list"></div></details>
+<footer>画面移動に備え、入力内容と参考画像をこのブラウザーに一時保存します。同じタブで戻ると復元します。参考画像の一時保存は24時間が目安です。<br>人物維持モードでは参考画像のコピーも保存します。生成画像と実行履歴・設定はアプリの保存先（既定はweb-results）に保存します。{% if gallery_retention_days %}自動削除の対象は完了から{{ gallery_retention_days }}日後の確認で削除します。残したい画像はギャラリーでお気に入りに登録してください。{% else %}生成画像と設定の自動削除は無効です。{% endif %}</footer>
+</main></div>
+<dialog id="delete-preset-dialog" aria-labelledby="delete-preset-title"><h2 id="delete-preset-title">プリセットを削除しますか？</h2><p id="delete-preset-description"></p><p id="delete-preset-error" class="error" role="alert"></p><p class="hint">生成画像や現在の入力内容は削除しません。</p><div class="downloads"><button type="button" class="secondary" id="cancel-preset-delete">キャンセル</button><button type="button" class="danger" id="confirm-preset-delete">削除する</button></div></dialog>
+<dialog id="image-viewer" aria-label="画像の拡大表示">
+<div class="viewer-toolbar"><span id="viewer-name"></span><button type="button" class="secondary" id="close-viewer">閉じる</button></div>
+<img id="viewer-image" alt="画像の拡大表示">
+<p class="hint">Escキー、または画像の外側をクリックして閉じられます。</p>
+</dialog>
+<script src="{{ url_for('static', filename='ui_common.js') }}" defer></script>
+<script src="{{ url_for('static', filename='reference_images.js') }}" defer></script>
+<script src="{{ url_for('static', filename='job_progress.js') }}" defer></script>
+<script src="{{ url_for('static', filename='setting_tooltips.js') }}" defer></script>
+<script src="{{ url_for('static', filename='model_settings.js') }}" defer></script>
+<script src="{{ url_for('static', filename='history.js') }}" defer></script>
+<script src="{{ url_for('static', filename='lora_catalog.js') }}" defer></script>
+<script src="{{ url_for('static', filename='lora_notes.js') }}" defer></script>
+<script src="{{ url_for('static', filename='lora_samples.js') }}" defer></script>
+<script src="{{ url_for('static', filename='lora_manager_list.js') }}" defer></script>
+<script src="{{ url_for('static', filename='lora_manager.js') }}" defer></script>
+<script src="{{ url_for('static', filename='recommendations.js') }}" defer></script>
+<script src="{{ url_for('static', filename='workspace_state.js') }}" defer></script>
+<script src="{{ url_for('static', filename='batch_options.js') }}" defer></script>
+<script src="{{ url_for('static', filename='batch_progress.js') }}" defer></script>
+<script src="{{ url_for('static', filename='generation_gate.js') }}" defer></script>
+<script src="{{ url_for('static', filename='form_settings.js') }}" defer></script>
+<script src="{{ url_for('static', filename='settings_presets.js') }}" defer></script>
+<script src="{{ url_for('static', filename='preflight.js') }}" defer></script>
+<script src="{{ url_for('static', filename='person_state.js') }}" defer></script>
+<script src="{{ url_for('static', filename='workspace_controller.js') }}" defer></script>
+<script src="{{ url_for('static', filename='result_view.js') }}" defer></script>
+<aside id="completion-notice" class="completion-notice" aria-label="生成完了通知" hidden><span role="status" aria-live="polite" aria-atomic="true"></span><button type="button" id="close-completion-notice" aria-label="通知を閉じる">×</button></aside>
+<script src="{{ url_for('static', filename='completion_notice.js') }}" defer></script>
+<script src="{{ url_for('static', filename='generation_actions.js') }}" defer></script>
+<script src="{{ url_for('static', filename='execution_controls.js') }}" defer></script>
+<script src="{{ url_for('static', filename='instruction_presets.js') }}" defer></script><script src="{{ url_for('static', filename='webui.js') }}" defer></script></body></html>

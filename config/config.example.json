@@ -1,0 +1,19 @@
+{
+  "host": "127.0.0.1",
+  "port": 7860,
+  "ollama_url": "http://127.0.0.1:11434",
+  "comfy_url": "http://127.0.0.1:8188",
+  "model": "qwen3-vl:8b-instruct",
+  "wd_dir": null,
+  "output_dir": "web-results",
+  "gallery_retention_days": 10,
+  "checkpoint_families": {},
+  "lora_folders": {
+    "sd15": "sd15",
+    "sdxl": "sdxl",
+    "illustrious": "illustrious"
+  },
+  "ollama_urls": [],
+  "ollama_keep_alive": 0,
+  "checkpoint_lora_folders": {}
+}

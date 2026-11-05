@@ -1,0 +1,119 @@
+# Internal developer documentation (private)
+/internal-docs/
+/AGENTS.md
+/.agents/
+/.codex/
+
+# Private environment notes (never distribute)
+/local/
+
+# Local settings, secrets and configuration backups
+config.json
+config.json.*
+/config.local.json
+/config/*
+!/config/config.example.json
+*.local.json
+settings.conf
+settings.conf.*
+.env
+.env.*
+!.env.example
+
+# Credentials and private keys (public configuration examples are explicit above)
+.aws/
+.ssh/
+.azure/
+.config/gcloud/
+.git-credentials
+.netrc
+_netrc
+.npmrc
+.pypirc
+credentials.json
+credentials.*.json
+secrets.json
+secrets.yaml
+secrets.yml
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+
+# Local backups, patch leftovers and editor swap files
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+*~
+*.swp
+*.swo
+
+# Generated images, history, LoRA samples and temporary executions
+/web-results/
+/outputs/
+/uploads/
+/reference-images/
+/tmp*/
+/tests/tmp*/
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.db
+*.db-*
+*.log
+*.log.*
+
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Old distribution artifacts and local archives (never publish)
+/dist/
+/build/
+*.egg-info/
+/release_manifest.json
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+
+# Downloaded model weights
+/models/
+/weights/
+*.safetensors
+*.ckpt
+*.onnx
+*.gguf
+*.pt
+*.pth
+
+# Node tooling, editors and OS files
+node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Automatic update backups and update lock
+/update-backups/
+/.update-lock/

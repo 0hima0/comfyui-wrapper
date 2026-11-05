@@ -1,0 +1,20 @@
+const {readProjectFile}=require('./support.cjs');
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const values=new Map(),records=new Map();let writes=0,fail=false;
+const context=vm.createContext({sessionStorage:{getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)},crypto:{},Date,Math});
+vm.runInContext(readProjectFile('web/static/workspace_state.js','utf8'),context);
+const State=vm.runInContext('WorkspaceState',context);
+const database={transaction(){const tx={objectStore(){return {put(record,key){writes++;queueMicrotask(()=>{if(fail){fail=false;tx.error=Error('quota');tx.onerror();}else{records.set(key,structuredClone(record));tx.oncomplete();}});},get(key){const req={};queueMicrotask(()=>{req.result=records.get(key);req.onsuccess();});return req;}};}};return tx;}};
+(async()=>{
+ const state=new State();state.database=async()=>database;
+ assert(state.fileKey);const file={name:'person.png',size:42,lastModified:5};const entries=[{id:2,filename:'person.png',file}];
+ const first=state.save({instruction:'庭'},entries);assert.equal(state.read().instruction,'庭');await first;
+ await state.save({instruction:'夕方'},entries);assert.equal(writes,1);assert.equal((await state.files())[0].file.name,'person.png');
+ const returned=new State();returned.database=async()=>database;assert.equal(returned.fileKey,state.fileKey);assert.equal(returned.read().instruction,'夕方');
+ await returned.save({instruction:'画像を外す'},[]);assert.equal((await returned.files()).length,0);
+ fail=true;await assert.rejects(returned.save({instruction:'再選択'},entries),/quota/);
+ await returned.save({instruction:'再試行'},entries);assert.equal((await returned.files()).length,1);
+ records.get(state.fileKey).savedAt=Date.now()-86400001;assert.equal((await state.files()).length,0);
+ values.set(state.key,'invalid');assert.equal(state.read(),null);
+ console.log('Workspace state passed: synchronous text, file retention, no image rewrite per keystroke, clearing, quota retry, expiry, HTTP token fallback.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

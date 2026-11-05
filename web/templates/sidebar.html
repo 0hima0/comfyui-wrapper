@@ -1,0 +1,13 @@
+{% set active = 'loras' if manager_open else ('system' if request.endpoint in ['system_page','preflight_page','storage_page','inventory_page'] else ('gallery' if request.endpoint == 'gallery_page' else ('batches' if request.endpoint in ['batch_list_page','batch_page'] else 'generate'))) %}
+<a class="skip-content" href="#page-content">本文へ移動</a>
+<button type="button" class="sidebar-mobile-toggle" aria-controls="app-sidebar" aria-expanded="false">☰ メニュー</button>
+<div class="sidebar-backdrop" hidden></div>
+<aside id="app-sidebar" class="app-sidebar" aria-label="メインメニュー">
+<div class="sidebar-heading"><a class="sidebar-brand" href="{{ url_for('index') }}" title="ComfyUI Wrapper"><span class="sidebar-mark" aria-hidden="true">CW</span><span class="sidebar-label">ComfyUI<br>Wrapper</span></a><button type="button" id="sidebar-toggle" class="sidebar-toggle" aria-controls="sidebar-links" aria-expanded="true" aria-label="サイドバーを折りたたむ" title="サイドバーを折りたたむ">‹</button></div>
+<nav id="sidebar-links" aria-label="ページ移動">
+{% for key, endpoint, icon, label in [('generate','index','✦','画像生成'),('gallery','gallery_page','▧','生成画像ギャラリー'),('batches','batch_list_page','◷','連続生成レビュー'),('loras','lora_page','⚙','LoRA管理'),('system','system_page','⚙','システム管理')] %}
+<a href="{{ url_for(endpoint) }}" data-sidebar-page="{{ key }}" title="{{ label }}" {% if active == key %}aria-current="page"{% endif %}><span class="sidebar-icon" aria-hidden="true">{{ icon }}</span><span class="sidebar-label">{{ label }}</span></a>
+{% endfor %}
+</nav><p class="sidebar-note sidebar-label">v{{ app_version }}</p>
+</aside>
+<script src="{{ url_for('static', filename='sidebar.js') }}" defer></script>

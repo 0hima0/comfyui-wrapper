@@ -1,0 +1,8 @@
+{% macro batch_progress(root_id, stop_id, floating=false, review_link=true) -%}
+<section id="{{ root_id }}" class="{{ 'runbar floating-runbar batch-review-progress' if floating else 'batch-progress-summary' }}" aria-label="連続生成の進行状況"{% if not floating %} hidden{% endif %}>
+<div class="batch-progress-heading"><strong data-batch-stage role="status" aria-live="polite">状態を取得しています…</strong><span data-batch-elapsed></span></div>
+<p{% if floating %} id="batch-status"{% endif %} data-batch-detail role="status" aria-live="polite"></p>
+<progress data-batch-progress max="1" value="0" aria-label="連続生成の完了回数"></progress><p data-batch-steps hidden></p>
+<div class="downloads">{% if review_link %}<a data-batch-review class="download secondary">連続生成レビューを開く</a>{% else %}<a data-batch-select class="download secondary" href="#batch-selection-count" hidden>画像を選別する</a>{% endif %}<button type="button" id="{{ stop_id }}" data-batch-stop class="secondary" disabled>連続生成を停止</button></div>
+</section>
+{%- endmacro %}

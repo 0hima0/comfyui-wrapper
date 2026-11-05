@@ -1,0 +1,22 @@
+<section class="card" id="lora-manager" hidden>
+<div class="manager-heading"><h2>LoRAトリガーワード管理</h2><button type="button" class="secondary" id="close-lora-manager">生成画面に戻る</button></div>
+<p>配布元が指定するトリガーワードを登録します。LoRA選択時に自動入力され、生成画面での編集は今回の生成にだけ適用されます。</p>
+<div class="lora-manager-layout">
+<aside class="managed-tree-panel" aria-labelledby="managed-tree-title"><h3 id="managed-tree-title">LoRA一覧</h3><button type="button" id="refresh-managed-loras" class="secondary">一覧を更新</button><p id="managed-lora-hint" class="hint" role="status"></p><label class="field">管理用タグで絞り込み<select id="managed-tag-filter"><option value="">すべて</option><option value="untagged:">タグなし</option></select></label><button type="button" id="clear-managed-tag-filter" class="secondary">絞り込みを解除</button><p id="managed-filter-status" class="hint" role="status"></p><nav id="managed-lora-tree" aria-label="LoRAのフォルダーとファイル"></nav><select id="managed-lora" hidden aria-hidden="true" tabindex="-1"></select></aside>
+<form id="lora-manager-form"><h3>登録情報</h3><p id="manager-save-state" class="save-state" role="status" aria-live="polite">LoRAを選択してください。</p><p id="managed-selected-name" class="managed-selected-name" aria-live="polite">LoRAを選択してください。</p>
+<label class="field">トリガーワード<textarea id="managed-trigger" aria-describedby="help-managed-trigger" maxlength="2000" placeholder="配布元の指定をそのまま入力。不要な場合は空欄。"></textarea><span class="field-help" id="help-managed-trigger">配布元が指定する言葉を入力します。複数ある場合はカンマで区切れます。生成画面でLoRAを選ぶと自動入力されます。</span></label>
+<label class="field">推奨プロンプト（任意）<textarea id="managed-recommended-prompt" maxlength="8000" placeholder="作成者が推奨するプロンプト"></textarea><span class="field-help">メモ・トリガーワードとは別に保存します。生成画面で参照・コピーできます。Promptへの自動追加は行いません。</span></label>
+<label class="field">配布元URL（任意）<input type="url" id="managed-url" aria-describedby="help-managed-url" maxlength="2000" placeholder="https://…"><span class="field-help" id="help-managed-url">配布ページを記録して、指定された使い方を確認するための欄です。画像生成のPromptには入りません。</span></label>
+<label class="field">管理用タグ（カンマ区切り・各40文字・20個まで）<input type="text" id="managed-tags" maxlength="1000" placeholder="例：人物, 衣装, お気に入り"><span class="field-help">LoRA一覧の分類・絞り込み用です。トリガーワードとは別で、生成Promptには入りません。「保存」で登録します。</span></label><label class="field">メモ（任意）<textarea id="managed-note" aria-describedby="help-managed-note" maxlength="8000" placeholder="推奨強度、使用条件など"></textarea><span class="field-help" id="help-managed-note">推奨強度や使い方など、自分用のメモです。画像生成のPromptには入りません。</span></label>
+<div class="downloads"><button type="submit" id="save-managed-lora">保存</button><button type="button" id="delete-managed-lora" class="secondary">登録を削除</button></div>
+<fieldset class="recommendation-panel"><legend>このLoRAの推奨強度（登録情報とは別に保存）</legend><label class="field">MODEL強度<input type="number" min="-2" max="2" step="0.05" value="0.7" id="recommended-model"></label><label class="field">CLIP強度<input type="number" min="-2" max="2" step="0.05" value="0.7" id="recommended-clip"></label><div class="downloads"><button type="button" id="save-lora-recommendation" class="secondary">推奨強度を保存</button><button type="button" id="delete-lora-recommendation" class="secondary">推奨強度を解除</button></div><p id="lora-recommendation-status" class="hint" role="status"></p></fieldset>
+<p class="status" id="manager-status" role="status" aria-live="polite"></p>
+</form>
+<section class="lora-sample-section" aria-labelledby="sample-title"><h3 id="sample-title">配布元のサンプル画像</h3><div id="managed-samples" class="lora-sample-grid"></div>
+<label class="field">画像を追加（複数選択可）<input type="file" id="managed-sample-files" accept="image/png,image/jpeg,image/webp" multiple aria-describedby="sample-help"></label>
+<p class="hint" id="sample-help">PNG・JPEG・WebP、1枚5MB以内、LoRAごとに最大6枚。選択後すぐにプレビューを表示し、自動保存します。保存結果は下の通知に表示します。画像クリックで拡大できます。サンプルは閲覧用で、生成の参考画像には自動で追加しません。</p>
+<p id="sample-status" class="status" role="status" aria-live="polite"></p><button type="button" class="secondary" id="retry-sample-upload" hidden>選択した画像を再送信</button><div id="managed-sample-pending" class="lora-sample-grid" aria-label="選択した未保存の画像" hidden></div></section>
+
+</div><p class="hint">登録情報はサーバーに保存され、再起動後も利用できます。登録情報を削除してもLoRA本体・実行履歴・サンプル画像は削除されません。サンプル画像は各画像の削除ボタンで管理します。</p>
+</section>
+<script>const managerInitiallyOpen={{ manager_open | tojson }};</script>

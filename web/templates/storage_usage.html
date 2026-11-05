@@ -1,0 +1,11 @@
+<section class="card storage-panel" aria-labelledby="storage-title">
+<div class="manager-heading"><h2 id="storage-title">保存容量</h2><button type="button" id="refresh-storage" class="secondary">容量を更新</button></div>
+<div class="storage-metrics">
+{% for key,label in [('total','WebUI全体'),('normal','通常（保護なし）'),('temporary','連続生成レビュー'),('protected','お気に入り保護中'),('other','その他'),('free','保存先の空き容量')] %}
+<div class="storage-metric"><span>{{ label }}</span><strong id="storage-{{ key }}">—</strong><small id="storage-{{ key }}-count"></small></div>
+{% endfor %}
+</div>
+<p class="hint" id="storage-status" role="status" aria-live="polite">容量を確認しています…</p>
+<details><summary>集計対象・保存先を表示</summary><p class="hint">画像・設定・ワークフロー・ZIP・保存済み参考画像を含むファイルサイズの合計です。お気に入りが1枚でもある実行は、全ファイルを「お気に入り保護中」に集計します。「その他」はデータベース・サムネイル・LoRAサンプル・履歴にないファイルなどです。リンク先は集計しません。</p><p class="hint">ComfyUI側のoutputやモデルはWebUI全体の集計対象外です。空き容量は、他のアプリの使用分も含む保存先ディスクの値です。生成中・削除中は概算となり、ディスク上の実際の占有量とは異なる場合があります。</p><p id="storage-directory" class="hint"></p><p id="storage-disk-label" class="hint"></p><progress id="storage-disk-used" max="100" value="0" aria-label="保存先ディスク全体の使用率" hidden></progress></details>
+</section>
+<script src="{{ url_for('static', filename='storage_usage.js') }}" defer></script>

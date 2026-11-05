@@ -1,0 +1,481 @@
+[
+  {
+    "rule": "/",
+    "endpoint": "index",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/analysis-models",
+    "endpoint": "analysis_models",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/app-settings",
+    "endpoint": "application_settings",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/batches",
+    "endpoint": "list_batches",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/batches/<batch_id>",
+    "endpoint": "batch_status",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/batches/<batch_id>/<action>",
+    "endpoint": "batch_action",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/batches/<batch_id>/name",
+    "endpoint": "rename_batch",
+    "methods": [
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/checkpoints",
+    "endpoint": "list_checkpoints",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/comfyui-update",
+    "endpoint": "comfyui_update",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/gallery",
+    "endpoint": "gallery_images",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/gallery/<job_id>",
+    "endpoint": "gallery_delete",
+    "methods": [
+      "DELETE",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/gallery/<job_id>/<name>/annotation",
+    "endpoint": "gallery_annotation",
+    "methods": [
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/gallery/<job_id>/<name>/favorite",
+    "endpoint": "gallery_favorite",
+    "methods": [
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/gallery/bulk-delete",
+    "endpoint": "gallery_bulk_delete",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/generation-options",
+    "endpoint": "generation_options",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/generation-state",
+    "endpoint": "generation_state",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/history",
+    "endpoint": "list_history",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/history/<job_id>",
+    "endpoint": "history_detail",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/history/<job_id>/restore",
+    "endpoint": "history_restore",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/history/<job_id>/settings",
+    "endpoint": "history_settings",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/instruction-presets",
+    "endpoint": "instruction_presets",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/instruction-presets/<instruction_id>",
+    "endpoint": "instruction_presets",
+    "methods": [
+      "DELETE",
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/inventory",
+    "endpoint": "installed_inventory",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/jobs",
+    "endpoint": "submit",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/jobs/<job_id>",
+    "endpoint": "status",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/jobs/<job_id>/archive",
+    "endpoint": "rebuild_archive",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/jobs/<job_id>/cancel",
+    "endpoint": "cancel_job",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/jobs/<job_id>/reconcile",
+    "endpoint": "reconcile_job",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples",
+    "endpoint": "lora_samples.listing",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples",
+    "endpoint": "lora_samples.upload",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples/<sample_id>",
+    "endpoint": "lora_samples.remove",
+    "methods": [
+      "DELETE",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples/<sample_id>/image",
+    "endpoint": "lora_samples.image",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples/<sample_id>/thumbnail",
+    "endpoint": "lora_samples.thumbnail",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/lora-samples/names",
+    "endpoint": "lora_samples.names",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/lora-triggers",
+    "endpoint": "change_lora_record",
+    "methods": [
+      "DELETE",
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/lora-triggers",
+    "endpoint": "lora_records",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/models",
+    "endpoint": "list_models",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/preflight",
+    "endpoint": "preflight_check",
+    "methods": [
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/presets",
+    "endpoint": "settings_presets",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST"
+    ]
+  },
+  {
+    "rule": "/api/presets/<preset_id>",
+    "endpoint": "settings_presets",
+    "methods": [
+      "DELETE",
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/recommendations",
+    "endpoint": "recommendations",
+    "methods": [
+      "DELETE",
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "PUT"
+    ]
+  },
+  {
+    "rule": "/api/storage-usage",
+    "endpoint": "storage_usage",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/api/version",
+    "endpoint": "version_info",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/batch/<batch_id>",
+    "endpoint": "batch_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/batches",
+    "endpoint": "batch_list_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/download/<job_id>/<name>",
+    "endpoint": "download",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/gallery",
+    "endpoint": "gallery_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/gallery/thumbnail/<job_id>/<name>",
+    "endpoint": "gallery_thumbnail",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/inventory",
+    "endpoint": "inventory_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/loras",
+    "endpoint": "lora_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/preflight",
+    "endpoint": "preflight_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/static/<path:filename>",
+    "endpoint": "static",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/storage",
+    "endpoint": "storage_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  },
+  {
+    "rule": "/system",
+    "endpoint": "system_page",
+    "methods": [
+      "GET",
+      "HEAD",
+      "OPTIONS"
+    ]
+  }
+]
