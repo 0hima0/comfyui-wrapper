@@ -13,6 +13,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y git libstdc++6 libatomic1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/LICENSE /usr/local/share/licenses/node/LICENSE
 WORKDIR /opt/wrapper
 COPY requirements.txt ./
 RUN python -m pip install --no-cache-dir -r requirements.txt \
@@ -20,6 +21,7 @@ RUN python -m pip install --no-cache-dir -r requirements.txt \
     && node --version
 
 COPY .gitignore .gitattributes .editorconfig .dockerignore README.md VERSION ./
+COPY LICENSE THIRD_PARTY_NOTICES.md ./
 COPY src/ ./src/
 COPY web/ ./web/
 COPY scripts/ ./scripts/
@@ -27,7 +29,7 @@ COPY tools/ ./tools/
 COPY tests/ ./tests/
 COPY docs/ ./docs/
 COPY deploy/ ./deploy/
-COPY workflows/anima_template.json ./workflows/anima_template.json
+COPY workflows/README.md ./workflows/README.md
 COPY config/config.example.json ./config/config.example.json
 COPY docker/tests/ ./docker/tests/
 

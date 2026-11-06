@@ -14,7 +14,7 @@ Ollamaで指示・参考画像を解析し、ComfyUIで画像を生成するロ�
 | 条件比較 | 最大2軸・20枚の連続生成と選別、保存画像2〜5枚の設定比較 |
 | 結果管理 | 検索・お気に入り・メモ・設定復元・中断結果の取り込み |
 
-Ollama・ComfyUIは別途稼働させます。Wrapperは同梱テンプレートからワークフローを構成します。独自のノード構成は、出力したワークフローをComfyUIで編集してください。
+Ollama・ComfyUIは別途稼働させます。SD1.5 / SDXL系のワークフローはアプリが構成し、Animaは利用者が取得したJSONを使用します。独自のノード構成は、出力したワークフローをComfyUIで編集してください。
 
 ## ドキュメント
 
@@ -30,6 +30,10 @@ Ollama・ComfyUIは別途稼働させます。Wrapperは同梱テンプレート
 | [追加セットアップ](docs/ADDITIONAL_SETUP.md) | LoRA・WD Tagger・IP-Adapter |
 | [マルチGPU](docs/MULTI_GPU_UBUNTU.md) | 解析分散とGPU割り当て |
 | [システム構成](docs/SYSTEM_OVERVIEW.md) | 処理・状態・API・用語 |
+
+## ライセンス
+
+アプリのコード・文書は [MIT License](LICENSE)。ワークフロー・モデルは利用者が取得し、それぞれの利用条件に従います。Animaの準備は [ワークフロー配置手順](workflows/README.md)、依存の条件は [第三者ライセンス](THIRD_PARTY_NOTICES.md) を確認してください。
 
 ## 検証範囲
 

@@ -1,5 +1,5 @@
 from comfyui_wrapper.workflows import builders
-from tests.support import wait_for_completion, image_upload
+from tests.support import wait_for_completion, image_upload, synthetic_anima_template
 import io
 import json
 import tempfile
@@ -15,6 +15,9 @@ from comfyui_wrapper.webui import create_app
 
 class WebUITests(unittest.TestCase):
     def setUp(self):
+        self.template_patch=patch.object(builders,'load_anima_template',side_effect=lambda path: synthetic_anima_template())
+        self.template_patch.start()
+        self.addCleanup(self.template_patch.stop)
         self.socket_patch=patch('comfyui_wrapper.integrations.comfy_progress.open_socket',return_value=None)
         self.socket_patch.start()
         self.addCleanup(self.socket_patch.stop)
@@ -220,7 +223,7 @@ class WebUITests(unittest.TestCase):
     def test_checkpoint_fallback_and_empty_list(self):
         with patch('comfyui_wrapper.models.model_catalog.urllib.request.urlopen',side_effect=OSError('offline')):
             data = self.client.get('/api/checkpoints?target=anima').json
-            self.assertEqual(data['names'],['anima-base-v1.0.safetensors'])
+            self.assertEqual(data['names'],['synthetic-anima.safetensors'])
             self.assertEqual(data['source'],'fallback')
             self.assertTrue(data['warning'])
         info = {'CheckpointLoaderSimple':{'input':{'required':{'ckpt_name':[[]]}}}}

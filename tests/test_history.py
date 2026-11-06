@@ -40,7 +40,7 @@ class HistoryTests(unittest.TestCase):
         result=dict(positive='blue dress',negative='blurry',summary_ja='青い服',uncertainties_ja='不明')
         with patch('comfyui_wrapper.analysis.generate.analyze',side_effect=ValueError('mock failure') if fail else None,return_value=result) as analysis_call:
             if fail: app.logger.disabled=True
-            form={'image':(image,'reference.png'),'instruction':'服を青に','seed':'42','analysis_model':'vision:chosen'}
+            form={'target':'animagine','image':(image,'reference.png'),'instruction':'服を青に','seed':'42','analysis_model':'vision:chosen'}
             form.update(settings)
             response=client.post('/api/jobs',data=form,headers={'X-Requested-With':'LLMPC'})
             self.assertEqual(response.status_code,202)
@@ -61,7 +61,7 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(detail['settings']['analysis_model'],'qwen3-vl:8b-instruct')
         self.assertEqual(detail['settings']['instruction'],'服を青に')
         self.assertEqual(detail['settings']['input_image']['filename'],'reference.png')
-        self.assertEqual(detail['generation_settings']['steps'],30)
+        self.assertEqual(detail['generation_settings']['steps'],28)
         self.assertTrue(detail['finished_at'])
         self.assertEqual(detail['state'],'done')
         data=client.get('/api/jobs/'+job).json

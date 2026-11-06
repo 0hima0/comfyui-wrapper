@@ -8,12 +8,20 @@ from comfyui_wrapper.integrations import comfy_client
 from comfyui_wrapper.workflows import person_workflow
 from comfyui_wrapper.prompts import person_prompts
 from comfyui_wrapper.generation.generation_pipeline import build_workflow
+from comfyui_wrapper.workflows import builders
 
 
 def check(settings, runtime, template, reference_ids, reuse=False):
     checks=[]
     def add(name,ok,detail):checks.append(dict(name=name,ok=bool(ok),detail=detail))
     add('参考画像',0<=len(reference_ids)<=4,'選択済み：'+str(len(reference_ids))+'枚' if reference_ids else '指示・プロンプトのみで生成します。')
+    if settings['target'] == 'anima':
+        try:
+            builders.load_anima_template(template)
+        except ValueError as error:
+            add('Animaワークフロー', False, str(error))
+            return dict(ok=False, checks=checks)
+        add('Animaワークフロー', True, '利用者が配置したワークフローを読み込みました。')
     if reuse:
         add('画像解析',True,'保存済みの解析結果を使うためOllamaへの接続確認を省略します。')
     else:

@@ -1,5 +1,5 @@
 from comfyui_wrapper.workflows import builders
-from tests.support import PROJECT_ROOT, comfy_graph, comfy_schema
+from tests.support import PROJECT_ROOT, comfy_graph, comfy_schema, synthetic_anima_template
 import io
 import json
 import unittest
@@ -51,7 +51,7 @@ class ComfyTests(unittest.TestCase):
         self.assertEqual(api.call_args_list[1].args[2]['extra_data']['extra_pnginfo']['llmpc'],metadata)
 
     def test_conversion_for_both_families(self):
-        anima = builders.patch_anima(generate.read_json(PROJECT_ROOT/'workflows/anima_template.json'),
+        anima = builders.patch_anima(synthetic_anima_template(),
                                     {'positive':'blue','negative':'blurry'},768,1024,1)
         for workflow in (anima,comfy_graph()[0]):
             prepared = cc.prepare(workflow)

@@ -7,6 +7,11 @@
 # Private environment notes (never distribute)
 /local/
 
+# User-acquired workflows; publish instructions only
+/workflows/*
+!/workflows/README.md
+/LICENSES/LicenseRef-CircleStone-Labs-Non-Commercial-1.2.txt
+
 # Local settings, secrets and configuration backups
 config.json
 config.json.*

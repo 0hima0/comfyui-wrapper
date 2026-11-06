@@ -2,6 +2,8 @@
 **
 !requirements.txt
 !README.md
+!LICENSE
+!THIRD_PARTY_NOTICES.md
 !VERSION
 !.gitignore
 !.gitattributes
@@ -29,7 +31,7 @@
 !deploy/
 !deploy/**
 !workflows/
-!workflows/anima_template.json
+!workflows/README.md
 !config/
 !config/config.example.json
 !docker/

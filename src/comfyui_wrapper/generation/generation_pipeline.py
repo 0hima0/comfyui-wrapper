@@ -106,7 +106,7 @@ def analyze_references(references, settings, wd_dir, ollama_url, progress):
 
 def build_workflow(result, settings, anima_template):
     if settings['target'] == 'anima':
-        template = generate.read_json(anima_template)
+        template = builders.load_anima_template(anima_template)
         workflow = builders.patch_anima(template, result, settings['width'],
                                         settings['height'], settings['seed'], settings['checkpoint'])
     else:

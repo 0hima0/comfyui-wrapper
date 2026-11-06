@@ -8,6 +8,37 @@ from PIL import Image
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
+
+def synthetic_anima_template():
+    """Independent contract fixture built from our own generic test graph, no upstream JSON."""
+    workflow = builders.animagine_workflow({'positive':'test scene','negative':'test negative'},512,512,1,'synthetic.safetensors')
+    ids = {1:44, 2:11, 3:12, 4:28, 5:19, 6:8, 7:9}
+    for node in workflow['nodes']:
+        node['id'] = ids[node['id']]
+    loader = next(n for n in workflow['nodes'] if n['id']==44)
+    loader['type'] = 'UNETLoader'
+    loader['outputs'] = loader['outputs'][:1]
+    builders.set_widgets(loader,['unet_name','weight_dtype'],['synthetic-anima.safetensors','default'])
+    for ident,kind,fields,values,output in (
+        (45,'CLIPLoader',['clip_name','type','device'],['synthetic-clip.safetensors','stable_diffusion','default'],'CLIP'),
+        (15,'VAELoader',['vae_name'],['synthetic-vae.safetensors'],'VAE')):
+        item={'id':ident,'type':kind,'inputs':[],'outputs':[{'name':output,'type':output,'links':[]}],'mode':0}
+        builders.set_widgets(item,fields,values)
+        workflow['nodes'].append(item)
+    for link in workflow['links']:
+        old_source = link[1]
+        link[1],link[3] = ids[old_source],ids[link[3]]
+        if old_source==1 and link[2] in (1,2):
+            link[1],link[2] = (45 if link[2]==1 else 15),0
+    for node in workflow['nodes']:
+        for output in node['outputs']:
+            output['links']=[]
+    by_id={n['id']:n for n in workflow['nodes']}
+    for number,source,slot,*_ in workflow['links']:
+        by_id[source]['outputs'][slot]['links'].append(number)
+    workflow['last_node_id']=45
+    return workflow
+
 def image_upload(color='blue',size=(32,48),filename='reference.png',mode='RGB'):
     data=io.BytesIO()
     with Image.new(mode,size,color) as image:image.save(data,'PNG')

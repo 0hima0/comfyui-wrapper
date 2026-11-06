@@ -104,7 +104,7 @@ class CancellationTests(unittest.TestCase):
             image = io.BytesIO()
             Image.new('RGB', (8,8)).save(image, 'PNG');image.seek(0)
             with patch('comfyui_wrapper.generation.generation_jobs.analyze_references', side_effect=analysis), patch('comfyui_wrapper.generation.generation_jobs.build_workflow') as build:
-                response = client.post('/api/jobs', data=dict(image=(image,'sample.png')),
+                response = client.post('/api/jobs', data=dict(target='animagine',image=(image,'sample.png')),
                                        headers={'X-Requested-With':'LLMPC'})
                 job = response.json['job_id'];route = '/api/jobs/'+job+'/cancel'
                 self.assertTrue(entered.wait(3))

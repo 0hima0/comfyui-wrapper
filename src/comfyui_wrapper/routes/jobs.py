@@ -2,10 +2,10 @@
 from flask import abort, jsonify, request, send_file, url_for
 from PIL import Image, UnidentifiedImageError
 from comfyui_wrapper.generation.submission import GenerationBusy
-from comfyui_wrapper.workflows import person_workflow
+from comfyui_wrapper.workflows import person_workflow, builders
 from comfyui_wrapper.integrations import comfy_client
 from comfyui_wrapper.generation.reference_images import load_references
-from comfyui_wrapper.app_metadata import FILES
+from comfyui_wrapper.app_metadata import FILES, BASE
 from comfyui_wrapper.infrastructure.http_support import require_ui_request
 from comfyui_wrapper.generation.submission_settings import normalize
 from comfyui_wrapper.generation import job_archive
@@ -28,6 +28,8 @@ def register(app, services):
             if receipt:return jsonify(**receipt),202
         try:
             settings, raw_seed, batch_plan = normalize(request.form, services.runtime, services.catalog, len(request.files.getlist('image')))
+            if settings['target'] == 'anima':
+                builders.load_anima_template(BASE/'workflows/anima_template.json')
             if settings['execute']:
                 choices = checkpoints(settings['target'])
                 if choices['source'] != 'comfyui':

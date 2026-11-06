@@ -3,9 +3,9 @@ import argparse
 import secrets
 from pathlib import Path
 from comfyui_wrapper.app_metadata import BASE
-from comfyui_wrapper.analysis.generate import analyze, read_json, write_json
+from comfyui_wrapper.analysis.generate import analyze, write_json
 from comfyui_wrapper.analysis.wd_tagger import wd_tags
-from comfyui_wrapper.workflows.builders import patch_anima, animagine_workflow
+from comfyui_wrapper.workflows.builders import patch_anima, animagine_workflow, load_anima_template
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -40,7 +40,10 @@ def main():
     if args.wd_dir:
         extracted, wd_report = wd_tags(image, args.wd_dir, args.threshold)
         tags = ', '.join(filter(None, [tags, extracted]))
-    template = read_json(args.template) if args.target == 'anima' else None
+    try:
+        template = load_anima_template(args.template) if args.target == 'anima' else None
+    except ValueError as error:
+        parser.error(str(error))
     result = analyze(image,args.instruction,tags,args.ollama_url,args.model,args.target)
     seed = args.seed if args.seed is not None else secrets.randbelow(2**53)
     workflow = (patch_anima(template,result,args.width,args.height,seed) if args.target == 'anima'

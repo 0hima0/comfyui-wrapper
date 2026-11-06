@@ -26,6 +26,7 @@ class GenerationToolsTests(unittest.TestCase):
         self.headers={'X-Requested-With':'LLMPC'}
 
     def form(self,color='blue',**values):
+        values.setdefault('target','animagine')
         return dict(image=image_upload(color,size=(24,32),mode='RGBA'),instruction='公園で座る',**values)
 
     def wait(self,job):

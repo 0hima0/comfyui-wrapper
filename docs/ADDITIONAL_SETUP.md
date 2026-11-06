@@ -4,6 +4,8 @@
 
 基本の生成経路が動く環境へ、必要な機能だけ追加します。`ComfyUI/models/...` はComfyUI側のパスであり、ComfyUI Wrapperの `output_dir` ではありません。
 
+モデル・LoRA・外部ノード・取得するワークフローはアプリのMITとは別条件です。[第三者ライセンス](../THIRD_PARTY_NOTICES.md) を確認してください。Animaを使う場合は [ワークフローを取得・配置](../workflows/README.md) します。JSONは同梱していません。
+
 | 機能 | 追加依存 | 実行側 |
 |---|---|---|
 | LoRA | ベースモデルと互換性のあるLoRAファイル | ComfyUI |

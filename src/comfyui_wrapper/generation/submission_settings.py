@@ -43,6 +43,8 @@ def normalize(form, runtime, catalog, image_count, *, check_wd=True):
     instruction = instruction or ('追加Positive Promptをもとに画像を生成する' if image_count == 0 else '画像の見た目を参考にした画像を生成したい')
     tags = ''
     checkpoint = form.get('checkpoint', default_checkpoint(target)).strip()
+    if target == 'anima' and not checkpoint:
+        raise ValueError('Animaワークフローを workflows/anima_template.json に配置し、生成モデルを選択してください。取得手順は workflows/README.md を参照してください。')
     classification = classify(target,checkpoint)
     selection = form.get('profile','auto')
     profile=sdxl_options.resolve_profile(target,checkpoint,selection)

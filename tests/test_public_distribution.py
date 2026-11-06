@@ -70,11 +70,15 @@ class PublicDistributionTests(unittest.TestCase):
                      'settings.conf.bak','README.md~','deploy/unit.service.swp',
                      'src/fix.py.orig','src/fix.py.rej','backup.tar.gz',
                      'history.log.1','models/example.safetensors','tmp-check/report.json']
+            private += ['workflows/anima_template.json','workflows/custom.json',
+                        'workflows/anima_template.json.license',
+                        'LICENSES/LicenseRef-CircleStone-Labs-Non-Commercial-1.2.txt']
             public=['docs/USER_GUIDE.md','tests/test_git_update.py','scripts/user/update.sh',
                     'config/config.example.json','docs/images/first-generation-input.png',
                     '.env.example','.github/workflows/tests.yml',
-                    'deploy/systemd/comfyui-wrapper.service','workflows/anima_template.json',
-                    'tests/fixtures/routes.json','web/static/webui.js','requirements.txt']
+                    'deploy/systemd/comfyui-wrapper.service','workflows/README.md',
+                    'tests/fixtures/routes.json','web/static/webui.js','requirements.txt',
+                    'LICENSE','THIRD_PARTY_NOTICES.md']
             paths=private+public
             result=subprocess.run(['git','-C',str(folder),'check-ignore','--stdin'],input=('\n'.join(paths)+'\n').encode(),capture_output=True,env=env,check=True)
             self.assertEqual(result.stdout.decode().splitlines(),private)

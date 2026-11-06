@@ -1,5 +1,38 @@
 """Workflow builders."""
 import copy
+import json
+from pathlib import Path
+
+
+def load_anima_template(path):
+    """Load a user-acquired UI workflow; never fetch or bundle third-party data."""
+    try:
+        template = json.loads(Path(path).read_text(encoding='utf-8-sig'))
+        if not isinstance(template, dict) or not isinstance(template.get('nodes'), list) or not isinstance(template.get('links'), list):
+            raise ValueError('UI形式のnodes・linksが必要です')
+        names = {
+            'CLIPTextEncode': ['text'], 'VAELoader': ['vae_name'],
+            'CLIPLoader': ['clip_name', 'type', 'device'],
+            'UNETLoader': ['unet_name', 'weight_dtype'],
+            'EmptyLatentImage': ['width', 'height', 'batch_size'],
+            'KSampler': ['seed', 'control_after_generate', 'steps', 'cfg', 'sampler_name', 'scheduler', 'denoise'],
+            'SaveImage': ['filename_prefix'],
+        }
+        for node in template['nodes']:
+            fields = names.get(node['type'])
+            if fields:
+                values = node['widgets_values']
+                if not isinstance(values, list):
+                    raise ValueError('widgets_valuesは配列で指定してください')
+                node['widgets_values_named'] = dict(zip(fields, values))
+        nodes = {node['id']: node for node in template['nodes']}
+        required = {11:'CLIPTextEncode',12:'CLIPTextEncode',19:'KSampler',28:'EmptyLatentImage',44:'UNETLoader'}
+        if any(nodes.get(ident,{}).get('type') != kind for ident,kind in required.items()):
+            raise ValueError('対応ノードID・種類が異なります')
+        return template
+    except (OSError, ValueError, KeyError, TypeError) as error:
+        raise ValueError('利用者が取得したAnimaワークフローを ' + str(path) +
+                         ' に配置してください。取得・対応形式は workflows/README.md を参照してください。') from error
 
 def set_widgets(node, names, values):
     node['widgets_values'] = values
@@ -12,7 +45,7 @@ def patch_anima(template, result, width, height, seed, unet_name=None):
     required = {11: 'CLIPTextEncode', 12: 'CLIPTextEncode', 19: 'KSampler', 28: 'EmptyLatentImage'}
     for key, kind in required.items():
         if nodes.get(key, {}).get('type') != kind:
-            raise ValueError('添付Animaテンプレートとノード構成が異なります')
+            raise ValueError('Animaワークフローの対応ノード構成が異なります。workflows/README.md を参照してください')
     set_widgets(nodes[11], ['text'], [result['positive']])
     set_widgets(nodes[12], ['text'], [result['negative']])
     set_widgets(nodes[28], ['width', 'height', 'batch_size'], [width, height, 1])

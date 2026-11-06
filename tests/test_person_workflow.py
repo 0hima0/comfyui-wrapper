@@ -214,7 +214,7 @@ class PersonWorkflowTests(unittest.TestCase):
             client=create_app(Path(temp)).test_client()
             def png():
                 data=io.BytesIO();Image.new('RGB',(8,8)).save(data,'PNG');data.seek(0);return data
-            data=MultiDict([('image',(png(),'one.png')),('image',(png(),'two.png')),('preserve_people','on')])
+            data=MultiDict([('image',(png(),'one.png')),('image',(png(),'two.png')),('preserve_people','on'),('checkpoint','synthetic-anima.safetensors')])
             with patch('comfyui_wrapper.analysis.generate.analyze') as analysis:
                 response=client.post('/api/jobs',data=data,headers={'X-Requested-With':'LLMPC'})
             self.assertEqual(response.status_code,400)

@@ -142,7 +142,7 @@ class MultiReferenceTests(unittest.TestCase):
 
     def test_total_pixel_limit_and_busy_cleanup(self):
         with patch('comfyui_wrapper.generation.reference_images.MAX_TOTAL_PIXELS',500):
-            response=self.client.post('/api/jobs',data=MultiDict([('image',(png(),'a.png')),('image',(png(),'b.png'))]),headers=self.headers)
+            response=self.client.post('/api/jobs',data=MultiDict([('target','animagine'),('image',(png(),'a.png')),('image',(png(),'b.png'))]),headers=self.headers)
         self.assertEqual(response.status_code,400)
         loaded=[]
         def load(*args):
@@ -150,7 +150,7 @@ class MultiReferenceTests(unittest.TestCase):
         lock=self.app.extensions['generation_lock'];lock.acquire()
         try:
             with patch('comfyui_wrapper.routes.jobs.load_references',side_effect=load):
-                response=self.client.post('/api/jobs',data=MultiDict([('image',(png(),'a.png')),('image',(png(),'b.png'))]),headers=self.headers)
+                response=self.client.post('/api/jobs',data=MultiDict([('target','animagine'),('image',(png(),'a.png')),('image',(png(),'b.png'))]),headers=self.headers)
             self.assertEqual(response.status_code,409)
             for reference in loaded:
                 with self.assertRaises(ValueError):reference.image.getpixel((0,0))

@@ -1,4 +1,4 @@
-from tests.support import PROJECT_ROOT
+from tests.support import PROJECT_ROOT, synthetic_anima_template
 import copy
 import unittest
 import io
@@ -56,7 +56,7 @@ class WorkflowTests(unittest.TestCase):
             self.assertEqual(nodes[target]['inputs'][input_slot]['type'], kind)
 
     def test_anima_preserves_model_and_connections(self):
-        template = read_json(PROJECT_ROOT/'workflows/anima_template.json')
+        template = synthetic_anima_template()
         original = copy.deepcopy(template)
         changed = patch_anima(template,self.result,768,1024,123)
         nodes = {n['id']:n for n in changed['nodes']}
@@ -65,7 +65,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(nodes[11]['widgets_values'],[self.result['positive']])
         self.assertEqual(nodes[11]['widgets_values_named']['text'],self.result['positive'])
         self.assertEqual(nodes[19]['widgets_values'][0:2],[123,'fixed'])
-        self.assertEqual(nodes[19]['widgets_values'][2:],[30,4,'er_sde','simple',1])
+        self.assertEqual(nodes[19]['widgets_values'][2:],next(n for n in original['nodes'] if n['id']==19)['widgets_values'][2:])
         self.assertEqual(nodes[28]['widgets_values'],[768,1024,1])
         self.assertEqual(nodes[44],next(n for n in template['nodes'] if n['id']==44))
         self.validate_links(changed)
