@@ -1,6 +1,7 @@
 let settingsRevision=null,settingsLoaded=false,settingsBusy=false,pendingSettings=null;
 const settingsLabels={comfy_url:'ComfyUIの接続先',ollama_url:'Ollamaの接続先',wd_dir:'WD Taggerの保存先（未使用なら空欄）',model:'解析モデル（Ollamaのモデル名）',host:'WebUIの待受アドレス',port:'WebUIのポート',output_dir:'生成結果の保存先',ollama_urls:'複数のOllama接続先（1行に1件・最大4件）',ollama_keep_alive:'Ollamaモデル保持時間（0・秒数・10mなど）',checkpoint_families:'チェックポイントの系列指定',lora_folders:'LoRAフォルダーの系列指定（従来方式）',checkpoint_lora_folders:'生成モデルとLoRAフォルダーの対応'};
 settingsLabels.gallery_retention_days='ギャラリー保持日数（0は自動削除しない・再起動後に反映）';
+settingsLabels.trusted_hosts='接続を許可するホスト名・IP（1行に1件・ポート不要・再起動後に反映）';
 function appSettingsBusy(value){settingsBusy=value;for(const el of $('app-settings-form').elements)el.disabled=value;syncLoraFolderBindings(value);$('app-settings-save').disabled=value;$('app-settings-cancel').disabled=value;}
 function settingsMapping(key,values,container){
  const title=document.createElement('h3');title.textContent=settingsLabels[key];container.append(title);
@@ -16,7 +17,7 @@ function renderAppSettings(settings){
   if(key==='checkpoint_lora_folders'){renderLoraFolderBindings(value,container);continue;}
   if(['checkpoint_families','lora_folders'].includes(key)){settingsMapping(key,value,container);continue;}
   const label=document.createElement('label');label.className='field';label.textContent=settingsLabels[key]||key;
-  const input=document.createElement(key==='ollama_urls'?'textarea':'input');input.name=key;input.value=key==='ollama_urls'?value.join('\n'):(value??'');
+  const input=document.createElement(['ollama_urls','trusted_hosts'].includes(key)?'textarea':'input');input.name=key;input.value=['ollama_urls','trusted_hosts'].includes(key)?value.join('\n'):(value??'');
   if(key==='port'){input.type='number';input.min='1';input.max='65535';input.step='1';}
   if(key==='gallery_retention_days'){input.type='number';input.min='0';input.max='36500';input.step='1';input.required=true;}
   if(key==='model'){input.type='text';input.maxLength=300;input.required=true;input.placeholder='例：gemma3:4b';}
@@ -28,6 +29,7 @@ function collectAppSettings(){
  const values={};for(const el of $('app-settings-form').elements)if(el.name)values[el.name]=el.value;
  values.port=Number(values.port);values.wd_dir=values.wd_dir.trim()||null;
  values.gallery_retention_days=Number(values.gallery_retention_days);
+ values.trusted_hosts=values.trusted_hosts.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  values.ollama_urls=values.ollama_urls.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  if(/^-?\d+$/.test(values.ollama_keep_alive))values.ollama_keep_alive=Number(values.ollama_keep_alive);
  for(const table of document.querySelectorAll('[data-mapping]')){const entries=[];for(const row of table.children){const name=row.querySelector('input').value.trim();if(!name)throw Error('系列指定の名前が空欄です。不要な行は削除してください。');if(entries.some(([key])=>key===name))throw Error('系列指定の名前が重複しています。');entries.push([name,row.querySelector('select').value]);}values[table.dataset.mapping]=Object.fromEntries(entries);}

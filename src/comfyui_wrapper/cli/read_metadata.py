@@ -8,7 +8,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('image')
     args=parser.parse_args()
-    with Image.open(args.image) as image:
+    with Image.open(args.image, formats=("PNG", "JPEG", "WEBP")) as image:
         image.load()
         text=getattr(image,'text',{})
         if 'llmpc' not in text:

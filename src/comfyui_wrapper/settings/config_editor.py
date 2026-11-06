@@ -13,6 +13,7 @@ from comfyui_wrapper.settings.app_config import DEFAULTS, validate_ollama_urls, 
 
 
 from comfyui_wrapper.models.model_families import validate_checkpoint_lora_folders
+from comfyui_wrapper.settings.app_config import validate_trusted_hosts
 
 
 class ConfigConflict(ValueError):
@@ -23,6 +24,7 @@ def validate(data, path):
     if not isinstance(data, dict) or set(data) != set(DEFAULTS):
         raise ValueError('設定項目が不足しているか、未対応の項目があります。')
     data = copy.deepcopy(data)
+    data['trusted_hosts']=validate_trusted_hosts(data['trusted_hosts'])
     data['checkpoint_lora_folders']=validate_checkpoint_lora_folders(data['checkpoint_lora_folders'])
     data['model']=validate_analysis_model(data['model'])
     data['gallery_retention_days']=validate_gallery_retention_days(data['gallery_retention_days'])

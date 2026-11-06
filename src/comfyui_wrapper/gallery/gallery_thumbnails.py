@@ -33,7 +33,7 @@ class ThumbnailCache:
             if target.is_file():return target
             with self.workers:
                 self.directory.mkdir(parents=True,exist_ok=True)
-                with Image.open(source) as original:
+                with Image.open(source, formats=("PNG", "JPEG", "WEBP")) as original:
                     preview=ImageOps.exif_transpose(original)
                     try:
                         preview.thumbnail((SIZE,SIZE),Image.Resampling.LANCZOS,reducing_gap=3)

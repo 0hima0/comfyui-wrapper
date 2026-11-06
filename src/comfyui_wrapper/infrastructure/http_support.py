@@ -10,11 +10,30 @@ def require_ui_request():
     if request.headers.get('X-Requested-With') != 'LLMPC':
         abort(403)
     origin = request.headers.get('Origin')
-    if origin and urlsplit(origin).netloc != request.host:
-        abort(403)
+    if origin:
+        try:
+            parsed = urlsplit(origin)
+            expected = urlsplit(request.host_url)
+            if (parsed.scheme not in ('http', 'https') or parsed.username or parsed.password or
+                    parsed.path or parsed.query or parsed.fragment or
+                    (parsed.scheme, parsed.hostname, parsed.port or (443 if parsed.scheme == 'https' else 80)) !=
+                    (expected.scheme, expected.hostname, expected.port or (443 if expected.scheme == 'https' else 80))):
+                abort(403)
+        except ValueError:
+            abort(403)
 
 def install_http_support(app):
     asset_versions = {}
+    @app.before_request
+    def trusted_host():
+        # Exact matching also handles IPv6, without suffix or wildcard acceptance.
+        allowed = app.config.get('WRAPPER_TRUSTED_HOSTS', ['localhost', '127.0.0.1', '[::1]'])
+        try:
+            parsed = urlsplit(request.host_url)
+            if parsed.hostname not in {host.strip('[]').lower() for host in allowed}:
+                abort(400)
+        except ValueError:
+            abort(400)
     @app.context_processor
     def application_version():
         return dict(app_version=RELEASE)

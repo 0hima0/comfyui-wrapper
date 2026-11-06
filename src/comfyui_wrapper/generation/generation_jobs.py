@@ -194,7 +194,7 @@ class GenerationJobs:
                     raw = comfy_client.fetch_image(self.runtime.comfy_url, descriptor)
                     job_control.check()
                     wd_result = {'enabled': settings['use_wd'], 'source': 'generated_image', 'threshold': report['wd_threshold'], 'model': report['wd_model'], 'status': 'disabled', 'tags': '', 'predictions': []}
-                    with Image.open(io.BytesIO(raw)) as generated:
+                    with Image.open(io.BytesIO(raw), formats=("PNG", "JPEG", "WEBP")) as generated:
                         if settings['use_wd']:
                             self.report_progress(job_id, 'save', '生成画像のWDタグを解析し、PNGに記録しています…')
                             try:

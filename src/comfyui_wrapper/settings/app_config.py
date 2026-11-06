@@ -5,9 +5,23 @@ from pathlib import Path
 from comfyui_wrapper.app_metadata import ANALYSIS_MODEL
 from comfyui_wrapper.models.model_families import validate_checkpoint_lora_folders
 
-DEFAULTS = dict(host='127.0.0.1',port=7860,ollama_url='http://127.0.0.1:11434',
+DEFAULTS = dict(host='127.0.0.1',trusted_hosts=['localhost','127.0.0.1','[::1]'],port=7860,ollama_url='http://127.0.0.1:11434',
                 comfy_url='http://127.0.0.1:8188',ollama_urls=[],ollama_keep_alive=0,model=ANALYSIS_MODEL,
                 wd_dir=None,output_dir='web-results',checkpoint_families={},lora_folders={},checkpoint_lora_folders={},gallery_retention_days=10)
+
+
+def validate_trusted_hosts(value):
+    if not isinstance(value, list) or not 1 <= len(value) <= 32:
+        raise ValueError('trusted_hostsは接続先ホスト名・IPの配列（1〜32件）です。')
+    for host in value:
+        if not isinstance(host, str) or len(host) > 253:
+            raise ValueError('trusted_hostsのホスト名が不正です。')
+        parsed = urlsplit('http://' + host)
+        if (not host or host.startswith('.') or host in ('0.0.0.0','[::]') or
+                not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*|\[[0-9A-Fa-f:]+\]', host) or
+                not parsed.hostname or parsed.port is not None or parsed.path):
+            raise ValueError('trusted_hostsにはワイルドカード・URL・ポートを含めないでください。')
+    return list(dict.fromkeys(value))
 
 
 def validate_gallery_retention_days(value):
@@ -49,6 +63,7 @@ def load_config(path):
     if not isinstance(data,dict) or set(data)-set(DEFAULTS):
         raise ValueError('設定ファイルの項目が不正です')
     result = {**DEFAULTS,**data}
+    result['trusted_hosts']=validate_trusted_hosts(result['trusted_hosts'])
     result['checkpoint_lora_folders']=validate_checkpoint_lora_folders(result['checkpoint_lora_folders'])
     result['model']=validate_analysis_model(result['model'])
     result['ollama_urls']=validate_ollama_urls(result['ollama_urls'])
