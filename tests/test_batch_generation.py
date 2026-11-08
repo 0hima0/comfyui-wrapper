@@ -18,6 +18,38 @@ from comfyui_wrapper.infrastructure import job_control
 
 
 class BatchTests(unittest.TestCase):
+    def test_random_seeds_are_saved_in_workflow_history_and_promoted_gallery(self):
+        self.mocks()
+        form=self.form()
+        form['batch_plan']=json.dumps(dict(count=3,ranges=[],seed_mode='random'))
+        with patch('comfyui_wrapper.generation.batch_generation.secrets.randbelow',side_effect=[101,202,303]):
+            response=self.client.post('/api/jobs',data=form,headers=self.headers)
+        self.assertEqual(response.status_code,202,response.json)
+        batch_id=response.json['batch_id'];batch=self.wait(batch_id)
+        self.assertEqual(batch['completed'],3)
+        for job,seed in zip(batch['job_ids'],[101,202,303]):
+            record=self.store.get(job)
+            self.assertEqual(record['settings']['seed'],seed)
+            self.assertEqual(record['settings']['seed_input'],str(seed))
+            workflow=json.loads((self.root/job/'workflow.json').read_text(encoding='utf-8'))
+            sampler=next(n for n in workflow['nodes'] if n['type']=='KSampler')
+            self.assertEqual(sampler['widgets_values'][0],seed)
+        job=batch['job_ids'][0]
+        response=self.client.post('/api/batches/'+batch_id+'/finalize',json={'selected':[job+'/image_0.png']},headers=self.headers)
+        self.assertEqual(response.status_code,200,response.json)
+        self.assertEqual(self.store.get(job)['settings']['seed'],101)
+
+    def test_random_matrix_keeps_axes_and_rejects_invalid_seed_mode(self):
+        settings=dict(execute=True,use_wd=False,seed=42,loras=[],generation_effective={'cfg':5})
+        plan=dict(count=2,mode='matrix',seed_mode='random',ranges=[dict(field='cfg',start=4,end=6,points=2)])
+        with patch('comfyui_wrapper.generation.batch_generation.secrets.randbelow',side_effect=[11,22]):
+            rows=variants(plan,settings)
+        self.assertEqual([r['seed'] for r in rows],[11,22])
+        self.assertEqual([r['batch_cell']['column'] for r in rows],[0,1])
+        self.assertEqual(settings['seed'],42)
+        plan['seed_mode']='invalid'
+        with self.assertRaises(ValueError):variants(plan,settings)
+
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(dir=Path(__file__).parent)
         self.root=Path(self.temp.name).resolve();self.app=create_app(self.root,wd_dir=self.root);self.client=self.app.test_client()

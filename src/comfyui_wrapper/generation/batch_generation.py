@@ -7,6 +7,7 @@ import shutil
 import zipfile
 import logging
 import threading
+import secrets
 from itertools import product
 from datetime import datetime, timezone
 from comfyui_wrapper.gallery.gallery_thumbnails import ThumbnailCache
@@ -17,9 +18,19 @@ def variants(raw,settings):
         raise ValueError('連続生成は1〜20回で指定してください。')
     mode=raw.get('mode','linear')
     if mode not in ('linear','matrix'):raise ValueError('連続生成の方式が不正です。')
+    seed_mode=raw.get('seed_mode','shared')
+    if seed_mode not in ('shared','random'):raise ValueError('連続生成のシード方式が不正です。')
     if not settings['execute']:raise ValueError('連続生成では「ComfyUIで画像も生成する」をオンにしてください。')
     ranges=raw.get('ranges')
-    if not isinstance(ranges,list) or not 1<=len(ranges)<=9:raise ValueError('変更する数値を選んでください。')
+    minimum=0 if seed_mode=='random' and mode=='linear' else 1
+    if not isinstance(ranges,list) or not minimum<=len(ranges)<=9:raise ValueError('変更する数値を選んでください。')
+    def seeds(planned):
+        for current in planned:
+            current['batch_seed_mode']=seed_mode
+            if seed_mode=='random':
+                current['seed']=secrets.randbelow(2**53)
+                current['seed_input']=str(current['seed'])
+        return planned
     keys=set()
     for item in ranges:
         if not isinstance(item,dict):raise ValueError('連続生成の設定が不正です。')
@@ -60,7 +71,7 @@ def variants(raw,settings):
                 else:current['loras'][item['lora']][item['field']]=value
             current['batch_cell']=dict(row=row,column=column,columns=counts[0],values=[dict(field=item['field'],lora=item.get('lora'),value=value) for item,value in zip(ranges,values)])
             planned.append(current)
-        return planned
+        return seeds(planned)
     result=[]
     for i in range(raw['count']):
         current=copy.deepcopy(settings)
@@ -70,7 +81,7 @@ def variants(raw,settings):
             elif item['field']=='threshold':current['threshold']=value
             else:current['loras'][item['lora']][item['field']]=value
         result.append(current)
-    return result
+    return seeds(result)
 
 
 class BatchStore:
