@@ -164,7 +164,7 @@ def fetch_image(url, descriptor):
         data = response.read(32*1024*1024+1)
     if len(data) > 32*1024*1024:
         raise ComfyError('生成画像が32MBを超えています。ComfyUIから保存してください。')
-    with Image.open(io.BytesIO(data)) as image:
+    with Image.open(io.BytesIO(data), formats=("PNG", "JPEG", "WEBP")) as image:
         if image.width * image.height > 24_000_000:
             raise ComfyError('生成画像が2400万画素を超えています。')
         return encode_png(image)

@@ -33,7 +33,7 @@ def main():
     if args.out.exists():
         parser.error('出力先は未作成のディレクトリを指定してください（上書き防止）')
     from PIL import Image, ImageOps
-    with Image.open(args.image) as source:
+    with Image.open(args.image, formats=("PNG", "JPEG", "WEBP")) as source:
         image = ImageOps.exif_transpose(source).convert('RGBA')
     tags = args.tags_file.read_text(encoding='utf-8-sig') if args.tags_file else ''
     wd_report = []

@@ -46,7 +46,7 @@ def register_lora_samples(app,store,root,thumbnails):
                 raw=file.read(MAX_BYTES+1)
                 if not raw or len(raw)>MAX_BYTES:raise ValueError('画像は1枚5MB以内にしてください。')
                 try:
-                    with Image.open(io.BytesIO(raw)) as image:
+                    with Image.open(io.BytesIO(raw), formats=("PNG", "JPEG", "WEBP")) as image:
                         if image.format not in FORMATS:raise ValueError('PNG・JPEG・WebPを選択してください。')
                         if image.width*image.height>24000000:raise ValueError('画像は1枚2400万画素以内にしてください。')
                         extension,mimetype=FORMATS[image.format];width,height=image.size;image.verify()

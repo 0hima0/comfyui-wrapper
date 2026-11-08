@@ -96,7 +96,7 @@ def reconcile(runner, job_id, import_images=False):
                 if '/' in name or '\\' in name or (directory / name).is_symlink():
                     raise ValueError('画像の保存先が不正です。')
                 raw = comfy_client.fetch_image(url, descriptor)
-                with Image.open(io.BytesIO(raw)) as image:
+                with Image.open(io.BytesIO(raw), formats=("PNG", "JPEG", "WEBP")) as image:
                     metadata = dict(schema='llmpc.image.v1', analysis=copy.deepcopy(report), comfy_output=descriptor,
                                     recovery=dict(prompt_id=prompt_id, generated_image_wd='not_reanalyzed'))
                     artifact_files.write_bytes(directory / name, comfy_client.encode_png(image, metadata, workflow, graph))

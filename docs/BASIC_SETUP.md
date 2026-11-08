@@ -55,6 +55,7 @@ vi config.json
 | `ollama_url` / `comfy_url` | `http://127.0.0.1:11434` / `http://127.0.0.1:8188` |
 | `model` | Ollama解析モデル名。生成チェックポイントとは別 |
 | `host` / `port` | Wrapperの待受。`127.0.0.1` / `7860` |
+| `trusted_hosts` | 接続を許可するホスト名・IP。既定はlocalhost・ループバックのみ。LAN共有は[アクセス制御](CONFIGURATION.md#network)も設定 |
 | `output_dir` | 履歴・画像の保存先。既定 `web-results` |
 | `gallery_retention_days` | 通常画像の保持日数。既定10日、`0`で自動削除無効 |
 

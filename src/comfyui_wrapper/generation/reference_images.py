@@ -48,7 +48,7 @@ def load_references(uploads, raw_info=None):
     references, total_pixels = [], 0
     try:
         for upload, row in zip(uploads, info):
-            with Image.open(upload.stream) as source:
+            with Image.open(upload.stream, formats=("PNG", "JPEG", "WEBP")) as source:
                 if source.format not in ('PNG', 'JPEG', 'WEBP'):
                     raise ValueError('PNG・JPEG・WebPの画像を選択してください。')
                 total_pixels += source.width * source.height

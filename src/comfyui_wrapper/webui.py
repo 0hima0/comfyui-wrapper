@@ -12,14 +12,16 @@ from comfyui_wrapper.routes.lora_samples import register_lora_samples
 from comfyui_wrapper.routes import register_routes
 from comfyui_wrapper.infrastructure.instance_lock import InstanceLock
 from comfyui_wrapper.settings.config_editor import ConfigEditor
+from comfyui_wrapper.settings.app_config import validate_trusted_hosts, DEFAULTS
 
 
 def create_app(output_dir=None, ollama_url='http://127.0.0.1:11434',
                model=ANALYSIS_MODEL, wd_dir=None, comfy_url='http://127.0.0.1:8188',
-               checkpoint_families=None, lora_folders=None, ollama_urls=None, ollama_keep_alive=0, checkpoint_lora_folders=None, gallery_retention_days=10):
+               checkpoint_families=None, lora_folders=None, ollama_urls=None, ollama_keep_alive=0, checkpoint_lora_folders=None, gallery_retention_days=10, trusted_hosts=None):
     app = Flask(__name__, template_folder=str(BASE/'web/templates'),
                 static_folder=str(BASE/'web/static'), static_url_path='/static')
     app.config['MAX_CONTENT_LENGTH'] = 25 * 1024 * 1024
+    app.config['WRAPPER_TRUSTED_HOSTS'] = validate_trusted_hosts(DEFAULTS['trusted_hosts'] if trusted_hosts is None else trusted_hosts)
     services = create_services(Path(output_dir or BASE/'web-results').resolve(), app.logger,
         ollama_url=ollama_url, comfy_url=comfy_url, wd_dir=wd_dir,
         checkpoint_families=checkpoint_families, lora_folders=lora_folders,
@@ -76,7 +78,7 @@ def main():
     with InstanceLock(args.output_dir or BASE/'web-results'):
         app = create_app(args.output_dir, args.ollama_url, args.model, args.wd_dir, args.comfy_url,
                          checkpoint_families=args.checkpoint_families, lora_folders=args.lora_folders, checkpoint_lora_folders=args.checkpoint_lora_folders,
-                         ollama_urls=args.ollama_urls,ollama_keep_alive=args.ollama_keep_alive, gallery_retention_days=args.gallery_retention_days)
+                         ollama_urls=args.ollama_urls,ollama_keep_alive=args.ollama_keep_alive, gallery_retention_days=args.gallery_retention_days, trusted_hosts=args.trusted_hosts)
         app.extensions['config_editor']=ConfigEditor(args.config,args.config_overrides)
         app.extensions['gallery_cleanup'].start()
         print(f'WebUI: http://{args.host}:{args.port} （別PCからはサーバーのIPアドレスで接続）', flush=True)
