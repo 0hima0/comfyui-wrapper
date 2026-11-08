@@ -13,7 +13,8 @@ function syncBatchOptions(){
  const axes=batchTargets.filter(t=>$('batch-vary-'+t.key).checked);
  const count=axes.reduce((n,t)=>n*Number($('batch-'+t.key+'-points').value),1);
  if(matrix)$('batch-count').value=axes.length?count:0;
- $('batch-plan-summary').textContent=matrix?(axes.length+'軸・合計 '+(axes.length?count:0)+'枚。最大2軸・20枚まで。同一シードで比較します。'):'指定回数で各項目を同時に変化させます。';
+ const random=$('batch-seed-mode').value==='random';
+ $('batch-plan-summary').textContent=(matrix?(axes.length+'軸・合計 '+(axes.length?count:0)+'枚。最大2軸・20枚まで。'):'指定回数で生成します。')+(random?'各回ランダムなシードを使います。シード欄の入力値は使用しません。':'全回同じシードで比較します。');
  for(const target of batchTargets){const points=$('batch-'+target.key+'-points');points.disabled=!enabled||!matrix||!$('batch-vary-'+target.key).checked;points.required=enabled&&matrix&&$('batch-vary-'+target.key).checked;const checked=$('batch-vary-'+target.key).checked;
   for(const side of ['start','end']){const input=$('batch-'+target.key+'-'+side);input.disabled=!enabled||!checked;input.required=enabled&&checked;}
  }
@@ -28,10 +29,12 @@ function batchPlan(){
   if(t.field==='threshold'&&!$('use-wd').checked)throw Error('しきい値を変える場合はWD Taggerをオンにしてください。');
   return range;
  });
- if(!ranges.length)throw Error('連続生成で変更する項目を選んでください。');
+ const seedMode=$('batch-seed-mode').value;
+ if(!ranges.length&&seedMode!=='random')throw Error('連続生成で変更する項目を選んでください。');
  const matrix=$('batch-layout').value==='matrix';
- if(matrix){if(ranges.length>2)throw Error('条件マトリクスは最大2軸です。');const targets=batchTargets.filter(t=>$('batch-vary-'+t.key).checked);ranges.forEach((r,i)=>r.points=Number($('batch-'+targets[i].key+'-points').value));if(ranges.some(r=>!Number.isInteger(r.points)||r.points<2)||ranges.reduce((n,r)=>n*r.points,1)>20)throw Error('各軸は2点以上、合計20枚以内にしてください。');}
- return {count:Number($('batch-count').value),ranges,mode:matrix?'matrix':'linear'};
+ if(matrix){if(!ranges.length||ranges.length>2)throw Error('条件マトリクスは1〜2軸を選んでください。');const targets=batchTargets.filter(t=>$('batch-vary-'+t.key).checked);ranges.forEach((r,i)=>r.points=Number($('batch-'+targets[i].key+'-points').value));if(ranges.some(r=>!Number.isInteger(r.points)||r.points<2)||ranges.reduce((n,r)=>n*r.points,1)>20)throw Error('各軸は2点以上、合計20枚以内にしてください。');}
+ return {count:Number($('batch-count').value),ranges,mode:matrix?'matrix':'linear',seed_mode:seedMode};
 }
 $('batch-layout').addEventListener('change',syncBatchOptions);
+$('batch-seed-mode').addEventListener('change',syncBatchOptions);
 $('batch-mode').addEventListener('change',syncBatchOptions);syncBatchOptions();

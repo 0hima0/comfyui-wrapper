@@ -677,6 +677,22 @@ class GenerationBrowserTests(unittest.TestCase):
         self.assertTrue(self.page.locator('#person-lora-hint').is_hidden())
         self.assertEqual(self.errors,[])
 
+    def test_random_batch_seed_option_and_draft_restore(self):
+        self.open_generation()
+        self.page.locator('[name=instruction]').fill('a park bench')
+        self.page.locator('#batch-mode').check()
+        self.page.locator('#batch-seed-mode').select_option('random')
+        self.page.locator('#batch-count').fill('2')
+        self.page.wait_for_timeout(600)
+        self.page.reload()
+        self.page.wait_for_function('document.querySelector("#batch-seed-mode").value==="random"')
+        with self.page.expect_request(lambda r: '/api/jobs' in r.url and r.method=='POST') as sent:
+            self.page.locator('#submit').click()
+        self.assertIn('"seed_mode":"random"',sent.value.post_data)
+        self.page.wait_for_url('**/batch/*')
+        self.page.wait_for_function('document.querySelectorAll(".gallery-card").length===2')
+        self.assertEqual(self.errors,[])
+
     def test_matrix_generation_inputs_and_review_grid(self):
         self.open_generation()
         self.page.locator('[name=instruction]').fill('a park bench')
